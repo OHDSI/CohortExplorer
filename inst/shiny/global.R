@@ -27,7 +27,6 @@ listOfFiles <- listOfFiles %>%
   ) %>%
   dplyr::arrange(cohortId, databaseId)
 
-
 tables <- c(
   "conditionEra",
   "conditionOccurrence",

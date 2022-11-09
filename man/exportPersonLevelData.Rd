@@ -13,7 +13,7 @@ exportPersonLevelData(
   cohortTable = "cohort",
   cohortDefinitionId,
   cohortName = NULL,
-  sampleSize = 100,
+  sampleSize = 25,
   personIds = NULL,
   exportFolder,
   databaseId,

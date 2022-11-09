@@ -14,7 +14,6 @@ shinyServer(function(input, output, session) {
   
   selectedSubjectId <- shiny::reactive({
     if (subject$index) {
-      browser()
       subjectIds()[subject$index]
     }
   })
@@ -85,19 +84,6 @@ shinyServer(function(input, output, session) {
             negate = TRUE
           ))
       }
-      # if (!is.null(input$highlightConceptSet)) {
-      #   selectedConceptSetId <- shinySettings$conceptSets$id %>%
-      #     dplyr::filter(fullName %in% c(input$highlightConceptSet)) %>%
-      #     dplyr::pull(conceptSetId)
-      #
-      #   filteredConceptIds <- filteredConceptIds %>%
-      #     dplyr::filter(
-      #       conceptId %in% c(shinySettings$conceptSets$resolved %>%
-      #         dplyr::filter(conceptSetId %in% selectedConceptSetId) %>%
-      #         dplyr::pull(conceptId) %>%
-      #         unique())
-      #     )
-      # }
       
       selectedCdmTables <-
         gsub(
@@ -188,12 +174,6 @@ shinyServer(function(input, output, session) {
       data <- dplyr::bind_rows(cohortData,
                                data) %>%
         dplyr::mutate(daysToFirst = firstOccurrenceDateValue - startDate)
-      
-      if (!is.null(input$dateRangeFilter)) {
-        data <- data %>%
-          dplyr::filter(startDate >= as.Date(input$dateRangeFilter[[1]])) %>%
-          dplyr::filter(endDate <= as.Date(input$dateRangeFilter[[2]]))
-      }
       
       if (!is.null(input$daysFromCohortStart)) {
         data <- data %>%
@@ -290,7 +270,7 @@ shinyServer(function(input, output, session) {
   
   output$age <- shiny::renderText({
     selectedSubjectId <- subjectIds()[subject$index][1]
-    age <- dataFromRds()$subjects %>%
+    age <- dataFromRds()$person %>%
       dplyr::filter(personId == selectedSubjectId) %>%
       dplyr::pull(age)
     return(age)
