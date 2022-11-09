@@ -21,7 +21,7 @@ createIfNotExist <-
            recursive = TRUE,
            errorMessage = NULL) {
     if (is.null(errorMessage) |
-        !class(errorMessage) == "AssertColection") {
+      !class(errorMessage) == "AssertColection") {
       errorMessage <- checkmate::makeAssertCollection()
     }
     if (!is.null(type)) {
@@ -36,9 +36,11 @@ createIfNotExist <-
           # ParallelLogger::logInfo(type, " already exists at ", name)
         }
       }
-      checkmate::assertDirectory(x = name,
-                                 access = "x",
-                                 add = errorMessage)
+      checkmate::assertDirectory(
+        x = name,
+        access = "x",
+        add = errorMessage
+      )
     }
     invisible(errorMessage)
   }
