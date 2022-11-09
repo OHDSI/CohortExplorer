@@ -12,10 +12,12 @@ exportPersonLevelData(
   tempEmulationSchema = NULL,
   cohortTable = "cohort",
   cohortDefinitionId,
+  cohortName = NULL,
   sampleSize = 100,
   personIds = NULL,
   exportFolder,
-  databaseId
+  databaseId,
+  shiftDates = TRUE
 )
 }
 \arguments{
@@ -44,6 +46,8 @@ privileges where temp tables can be created.}
 
 \item{cohortDefinitionId}{The cohort id to extract records.}
 
+\item{cohortName}{(optional) Cohort Name}
+
 \item{sampleSize}{(Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.}
 
 \item{personIds}{(Optional) An array of personId's to look for in Cohort table and CDM.}
@@ -53,6 +57,10 @@ does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf'). This will be displayed
 in shiny app to toggle between databases. Should not have space or underscore (_).}
+
+\item{shiftDates}{(Default = TRUE) Do you want to shift dates? This will help further de-identify data. The shift
+is the process of recalibrating dates such that all persons min(observation_period_start_date) is
+0000-01-01.}
 }
 \description{
 Export person level data from omop cdm tables from eligible persons in the cohort.

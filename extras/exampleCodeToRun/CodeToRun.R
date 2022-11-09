@@ -3,7 +3,24 @@ library(magrittr)
 # Pre-requisites ----
 remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- 10322
+cohortDefinitionIds <- c(10347,
+                         10345,
+                         10329,
+                         10344,
+                         10349,
+                         10348,
+                         10343,
+                         10328,
+                         10327,
+                         10322)
+
+ROhdsiWebApi::authorizeWebApi(baseUrl = Sys.getenv("BaseUrl"), authMethod = "windows")
+cohortDefinitionSet <- ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = Sys.getenv("BaseUrl")) %>% 
+  dplyr::filter(id %in% c(cohortDefinitionIds)) %>% 
+  dplyr::select(id, name) %>% 
+  dplyr::rename(cohortId = id, cohortName = name) %>% 
+  dplyr::arrange(cohortId)
+                         
 exportFolder <- "c:/temp/CohortExplorer"
 projectCode <- "epi1024CohortDiagnostics"
 
@@ -53,9 +70,11 @@ for (i in (1:length(databaseIds))) {
       cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
       vocabularyDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
       cohortTable = cohortTableName,
-      cohortDefinitionId = cohortDefinitionIds[[j]],
+      cohortDefinitionId = cohortDefinitionSet[j,]$cohortId,
+      cohortName = cohortDefinitionSet[j,]$cohortName,
       exportFolder = exportFolder,
-      databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database)
+      databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
+      shiftDate = TRUE
     )
   }
 }

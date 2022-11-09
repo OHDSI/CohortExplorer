@@ -33,7 +33,9 @@
 #'
 #' @template TempEmulationSchema
 #'
-#' @param cohortDefinitionId              The cohort id to extract records.
+#' @param cohortDefinitionId          The cohort id to extract records.
+#' 
+#' @param cohortName                  (optional) Cohort Name
 #'
 #' @param sampleSize                  (Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.
 #'
@@ -43,6 +45,10 @@
 #'                                    does not exist it will be created.
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf'). This will be displayed
 #'                                    in shiny app to toggle between databases. Should not have space or underscore (_).
+#'                                    
+#' @param shiftDates                  (Default = TRUE) Do you want to shift dates? This will help further de-identify data. The shift 
+#'                                    is the process of recalibrating dates such that all persons min(observation_period_start_date) is
+#'                                    0000-01-01.
 #'
 #' @examples
 #' \dontrun{
@@ -69,10 +75,12 @@ exportPersonLevelData <-
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
            cohortDefinitionId,
+           cohortName = NULL,
            sampleSize = 100,
            personIds = NULL,
            exportFolder,
-           databaseId) {
+           databaseId,
+           shiftDates = TRUE) {
     startTime <- Sys.time()
     
     errorMessage <- checkmate::makeAssertCollection()
@@ -264,6 +272,18 @@ exportPersonLevelData <-
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
+    
+    person <- person %>% 
+      dplyr::inner_join(
+        cohort %>% 
+          dplyr::group_by(subjectId) %>% 
+          dplyr::summarise(yearOfCohort = min(clock::get_year(cohortStartDate)), .groups = "keep") %>% 
+          dplyr::ungroup() %>% 
+          dplyr::rename("personId" = subjectId),
+        by = "personId"
+      ) %>% 
+      dplyr::mutate(age = yearOfCohort - yearOfBirth) %>% 
+      dplyr::select(-yearOfCohort, -yearOfBirth)
     
     writeLines("Getting observation period table.")
     observationPeriod <- DatabaseConnector::renderTranslateQuerySql(
@@ -689,11 +709,220 @@ exportPersonLevelData <-
       dplyr::summarise(cohortStartDate = min(cohortStartDate)) %>%
       dplyr::inner_join(person,
                         by = "personId") %>%
-      dplyr::mutate(age = clock::get_year(cohortStartDate) - yearOfBirth) %>%
       dplyr::inner_join(conceptIds,
                         by = c("genderConceptId" = "conceptId")) %>%
       dplyr::rename(gender = conceptName) %>%
       dplyr::ungroup()
+    
+    if (shiftDates) {
+      originDate <- as.Date('0000-01-01')
+      personMinObservationPeriodDate <- observationPeriod %>% 
+        dplyr::group_by(personId) %>% 
+        dplyr::summarise(minObservationPeriodDate = min(observationPeriodStartDate), .groups = "keep") %>% 
+        dplyr::ungroup()
+      
+      observationPeriod <- observationPeriod %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(observationPeriodStartDate = clock::add_days(x = as.Date(originDate),
+                                                                   n = as.integer(
+                                                                     difftime(
+                                                                       time1 = observationPeriodStartDate,
+                                                                       time2 = minObservationPeriodDate,
+                                                                       units = "days"
+                                                                     )
+                                                                   ))) %>%
+        dplyr::mutate(observationPeriodEndDate = clock::add_days(x = as.Date(originDate),
+                                                                 n = as.integer(
+                                                                   difftime(
+                                                                     time1 = observationPeriodEndDate,
+                                                                     time2 = minObservationPeriodDate,
+                                                                     units = "days"
+                                                                   )
+                                                                 ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      cohort <- cohort %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(cohortStartDate = clock::add_days(x = as.Date(originDate),
+                                                                   n = as.integer(
+                                                                     difftime(
+                                                                       time1 = cohortStartDate,
+                                                                       time2 = minObservationPeriodDate,
+                                                                       units = "days"
+                                                                     )
+                                                                   ))) %>%
+        dplyr::mutate(cohortEndDate = clock::add_days(x = as.Date(originDate),
+                                                                 n = as.integer(
+                                                                   difftime(
+                                                                     time1 = cohortEndDate,
+                                                                     time2 = minObservationPeriodDate,
+                                                                     units = "days"
+                                                                   )
+                                                                 ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      conditionEra <- conditionEra %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                        n = as.integer(
+                                                          difftime(
+                                                            time1 = startDate,
+                                                            time2 = minObservationPeriodDate,
+                                                            units = "days"
+                                                          )
+                                                        ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                      n = as.integer(
+                                                        difftime(
+                                                          time1 = endDate,
+                                                          time2 = minObservationPeriodDate,
+                                                          units = "days"
+                                                        )
+                                                      ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      conditionOccurrence <- conditionOccurrence %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = endDate,
+                                                    time2 = minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      drugEra <- drugEra %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = endDate,
+                                                    time2 = minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      drugExposure <- drugExposure %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = endDate,
+                                                    time2 = minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      measurement <- measurement %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = endDate,
+                                                    time2 = minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+      
+      observation <- observation %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::select(-minObservationPeriodDate)
+      
+      procedureOccurrence <- procedureOccurrence %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = endDate,
+                                                    time2 = minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+    
+      visitOccurrence <- visitOccurrence %>%
+        dplyr::inner_join(personMinObservationPeriodDate,
+                          by = "personId") %>%
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = startDate,
+                                                      time2 = minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  ))) %>%
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = endDate,
+                                                    time2 = minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                ))) %>% 
+        dplyr::select(-minObservationPeriodDate)
+    }
     
     results <- list(
       cohort = cohort,
@@ -708,7 +937,8 @@ exportPersonLevelData <-
       drugExposure = drugExposure,
       drugEra = drugEra,
       measurement = measurement,
-      conceptId = conceptIds
+      conceptId = conceptIds,
+      cohortName = cohortName
     )
     
     dir.create(
@@ -746,6 +976,10 @@ exportPersonLevelData <-
     file.copy(
       from = system.file("shiny", "R", "widgets.R", package = utils::packageName()),
       to = file.path(exportFolder, "CohortExplorer", "R", "widgets.R")
+    )
+    file.copy(
+      from = system.file("shiny", "R", "private.R", package = utils::packageName()),
+      to = file.path(exportFolder, "CohortExplorer", "R", "private.R")
     )
     
     if (file.exists(file.path(exportFolder, "data", rdsFileName))) {
