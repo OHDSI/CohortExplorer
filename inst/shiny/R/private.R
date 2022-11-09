@@ -8,7 +8,10 @@ csvDownloadButton <- function(ns,
                  ))
 }
 
-readData <- function(databaseId, 
+readData <- function(databaseId,
                      cohortId) {
-  return(readRDS(file = file.path("data", paste0("CohortExplorer_", cohortId, "_", databaseId, ".RData"))))
+  return(readRDS(file = file.path(
+    "data",
+    paste0("CohortExplorer_", cohortId, "_", databaseId, ".RData")
+  )))
 }
