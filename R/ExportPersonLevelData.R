@@ -16,11 +16,10 @@
 
 
 
-#' Extract person level data for cohort
+#' Export person level data for cohort
 #'
 #' @description
-#' Given an instantiated cohort table, extract all person level data from omop cdm tables
-#' for persons found in the cohort.
+#' Export person level data from omop cdm tables from eligible persons in the cohort.
 #'
 #' @template ConnectionDetails
 #'
@@ -36,9 +35,14 @@
 #'
 #' @param cohortDefinitionId              The cohort id to extract records.
 #'
-#' @param sampleSize            (Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.
+#' @param sampleSize                  (Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.
 #'
-#' @param personIds              (Optional) An array of personId's to look for in Cohort table and CDM.
+#' @param personIds                   (Optional) An array of personId's to look for in Cohort table and CDM.
+#'
+#' @param exportFolder                The folder where the output will be exported to. If this folder
+#'                                    does not exist it will be created.
+#' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf'). This will be displayed
+#'                                    in shiny app to toggle between databases. Should not have space or underscore (_).
 #'
 #' @examples
 #' \dontrun{
@@ -50,14 +54,14 @@
 #'   password = "secure"
 #' )
 #'
-#' extractaPersonLevelData(
+#' exportPersonLevelData(
 #'   connectionDetails = connectionDetails,
 #'   cohortDefinitionId = 1234
 #' )
 #' }
 #'
 #' @export
-extractaPersonLevelData <-
+exportPersonLevelData <-
   function(connectionDetails,
            cohortDatabaseSchema = "cohort",
            cdmDatabaseSchema,
@@ -65,8 +69,10 @@ extractaPersonLevelData <-
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
            cohortDefinitionId,
-           sampleSize = 25,
-           personIds = NULL) {
+           sampleSize = 100,
+           personIds = NULL,
+           exportFolder,
+           databaseId) {
     startTime <- Sys.time()
     
     errorMessage <- checkmate::makeAssertCollection()
@@ -86,6 +92,13 @@ extractaPersonLevelData <-
     checkmate::assertCharacter(x = cohortTable,
                                min.len = 1,
                                add = errorMessage)
+    
+    checkmate::assertCharacter(
+      x = databaseId,
+      min.len = 1,
+      max.len = 1,
+      add = errorMessage
+    )
     
     checkmate::assertCharacter(
       x = tempEmulationSchema,
@@ -127,6 +140,45 @@ extractaPersonLevelData <-
       add = errorMessage
     )
     checkmate::reportAssertions(collection = errorMessage)
+    
+    originalDatabaseId <- databaseId
+    databaseId <-
+      as.character(gsub(
+        pattern = " ",
+        replacement = "",
+        x = databaseId
+      ))
+    databaseId <-
+      as.character(gsub(
+        pattern = "_",
+        replacement = "",
+        x = databaseId
+      ))
+    
+    if (nchar(databaseId) < nchar(originalDatabaseId)) {
+      stop(paste0(
+        "databaseId should not have space or underscore: ",
+        originalDatabaseId
+      ))
+    }
+    
+    exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
+    
+    errorMessage <-
+      createIfNotExist(type = "folder",
+                       name = exportFolder,
+                       errorMessage = errorMessage)
+    
+    rdsFileName <-
+      paste0("CohortExplorer_",
+             cohortDefinitionId,
+             "_",
+             databaseId,
+             ".RData")
+    
+    if (file.exists(file.path(exportFolder, rdsFileName))) {
+      warning(paste0("Found previous ", rdsFileName, ". This will be replaced."))
+    }
     
     ## Set up connection to server----
     ParallelLogger::logTrace(" - Setting up connection")
@@ -175,26 +227,27 @@ extractaPersonLevelData <-
     cohort <-
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
-        sql = "SELECT subject_id,
+        sql = "SELECT c.subject_id,
               	cohort_start_date,
               	cohort_end_date
               FROM @cohort_database_schema.@cohort_table c
               INNER JOIN #persons_filter p
               ON c.subject_id = p.person_id
               WHERE cohort_definition_id = @cohort_definition_id
-          ORDER BY subject_id, cohort_start_date;",
-        cohort_database_schema = shinySettings$cohortDatabaseSchema,
-        cohort_table = shinySettings$cohortTable,
-        cohort_definition_id = shinySettings$cohortDefinitionId,
+          ORDER BY c.subject_id, cohort_start_date;",
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable,
+        cohort_definition_id = cohortDefinitionId,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble() %>%
       dplyr::arrange(subjectId, cohortStartDate)
     
-    shinySettings$subjectIdsFound <- unique(cohort$subjectId)
+    subjectIdsFound <- unique(cohort$subjectId)
     
     if (nrow(cohort) == 0) {
-      stop("Cohort does not have the selected subject ids")
+      warning("Cohort does not have the selected subject ids")
+      return(NULL)
     }
     
     writeLines("Getting person table.")
@@ -206,9 +259,8 @@ extractaPersonLevelData <-
         FROM @cdm_database_schema.person p
         INNER JOIN #persons_filter pf
         ON p.person_id = pf.person_id
-        ORDER BY person_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+        ORDER BY p.person_id;",
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -226,8 +278,7 @@ extractaPersonLevelData <-
               ORDER BY op.person_id,
                       observation_period_start_date,
                       observation_period_end_date;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -257,8 +308,7 @@ extractaPersonLevelData <-
                 visit_concept_id,
                 visit_type_concept_id,
                 visit_source_concept_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -277,7 +327,6 @@ extractaPersonLevelData <-
         FROM @cdm_database_schema.condition_occurrence c
         INNER JOIN #persons_filter p
         ON c.person_id = p.person_id
-        WHERE person_id IN (@subject_ids)
         GROUP BY c.person_id,
                   condition_start_date,
                   condition_end_date,
@@ -290,8 +339,7 @@ extractaPersonLevelData <-
                   condition_concept_id,
                   condition_type_concept_id,
                   condition_source_concept_id;",
-        cdm_database_schema = shinySettings$cdmDatabaseSchema,
-        subject_ids = shinySettings$subjectIds,
+        cdm_database_schema = cdmDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
@@ -315,8 +363,7 @@ extractaPersonLevelData <-
               condition_era_start_date,
               condition_era_end_date,
               condition_concept_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -343,8 +390,7 @@ extractaPersonLevelData <-
                 observation_date,
                 observation_concept_id,
                 observation_type_concept_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -372,8 +418,7 @@ extractaPersonLevelData <-
                 procedure_concept_id,
                 procedure_type_concept_id,
                 procedure_source_concept_id;",
-        cdm_database_schema = shinySettings$cdmDatabaseSchema,
-        subject_ids = shinySettings$subjectIds,
+        cdm_database_schema = cdmDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble() %>%
@@ -404,8 +449,7 @@ extractaPersonLevelData <-
                   drug_concept_id,
                   drug_type_concept_id,
                   drug_source_concept_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -429,8 +473,7 @@ extractaPersonLevelData <-
                   drug_era_start_date,
                   drug_era_end_date,
                   drug_concept_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -448,7 +491,6 @@ extractaPersonLevelData <-
         FROM @cdm_database_schema.measurement m
         INNER JOIN #persons_filter pf
         ON m.person_id = pf.person_id
-        WHERE person_id IN (@subject_ids)
         GROUP BY m.person_id,
                   measurement_date,
                   measurement_concept_id,
@@ -459,8 +501,7 @@ extractaPersonLevelData <-
                   measurement_concept_id,
                   measurement_type_concept_id,
                   measurement_source_concept_id;",
-      cdm_database_schema = shinySettings$cdmDatabaseSchema,
-      subject_ids = shinySettings$subjectIds,
+      cdm_database_schema = cdmDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -640,6 +681,85 @@ extractaPersonLevelData <-
     ) %>%
       dplyr::tibble()
     
+    cohort <- cohort %>%
+      dplyr::rename(personId = subjectId)
+    
+    subjects <- cohort %>%
+      dplyr::group_by(personId) %>%
+      dplyr::summarise(cohortStartDate = min(cohortStartDate)) %>%
+      dplyr::inner_join(person,
+                        by = "personId") %>%
+      dplyr::mutate(age = clock::get_year(cohortStartDate) - yearOfBirth) %>%
+      dplyr::inner_join(conceptIds,
+                        by = c("genderConceptId" = "conceptId")) %>%
+      dplyr::rename(gender = conceptName) %>%
+      dplyr::ungroup()
+    
+    results <- list(
+      cohort = cohort,
+      person = person,
+      subjects = subjects,
+      observationPeriod = observationPeriod,
+      visitOccurrence = visitOccurrence,
+      conditionOccurrence = conditionOccurrence,
+      conditionEra = conditionEra,
+      observation = observation,
+      procedureOccurrence = procedureOccurrence,
+      drugExposure = drugExposure,
+      drugEra = drugEra,
+      measurement = measurement,
+      conceptId = conceptIds
+    )
+    
+    dir.create(
+      path = file.path(exportFolder, "CohortExplorer"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      path = file.path(exportFolder, "CohortExplorer", "data"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      path = file.path(exportFolder, "CohortExplorer", "R"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    
+    file.copy(
+      from = system.file("shiny", "CohortExplorer.Rproj", package = utils::packageName()),
+      to = file.path(exportFolder, "CohortExplorer", "CohortExplorer.Rproj")
+    )
+    file.copy(
+      from = system.file("shiny", "global.R", package = utils::packageName()),
+      to = file.path(exportFolder, "CohortExplorer", "global.R")
+    )
+    file.copy(
+      from = system.file("shiny", "ui.R", package = utils::packageName()),
+      to = file.path(exportFolder, "CohortExplorer", "ui.R")
+    )
+    file.copy(
+      from = system.file("shiny", "server.R", package = utils::packageName()),
+      to = file.path(exportFolder, "CohortExplorer", "server.R")
+    )
+    file.copy(
+      from = system.file("shiny", "R", "widgets.R", package = utils::packageName()),
+      to = file.path(exportFolder, "CohortExplorer", "R", "widgets.R")
+    )
+    
+    if (file.exists(file.path(exportFolder, "data", rdsFileName))) {
+      unlink(
+        x = file.path(exportFolder, "data", rdsFileName),
+        recursive = TRUE,
+        force = TRUE
+      )
+    }
+    
+    ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
+    
+    saveRDS(object = results,
+            file = file.path(exportFolder, "CohortExplorer", "data",rdsFileName))
     
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(" - Extracting person level data took ",
