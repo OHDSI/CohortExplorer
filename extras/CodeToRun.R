@@ -23,5 +23,6 @@ CohortExplorer::exportPersonLevelData(
   cohortTable = "cohort",
   cohortDefinitionId = 1234,
   exportFolder = "export",
-  databaseId = "ccae"
+  databaseId = "ccae",
+  cohortName = "my cohort"
 )
