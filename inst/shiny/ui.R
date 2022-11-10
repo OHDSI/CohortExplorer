@@ -1,4 +1,6 @@
-shinyUI(fluidPage(fluidRow(
+shinyUI(fluidPage(fluidRow(titlePanel(
+    shiny::textOutput("cohortName")
+),
   column(
     2,
     shinyWidgets::pickerInput(
@@ -42,7 +44,8 @@ shinyUI(fluidPage(fluidRow(
         "Concept Name Filter (keep)",
         actionLink("filterInfo", "", icon = icon("info-circle"))
       ),
-      placeholder = "regex"
+      placeholder = "regex",
+      value = regexFilterInfo
     ),
     textAreaInput(
       "deleteRegex",

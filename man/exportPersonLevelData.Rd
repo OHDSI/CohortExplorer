@@ -17,7 +17,8 @@ exportPersonLevelData(
   personIds = NULL,
   exportFolder,
   databaseId,
-  shiftDates = TRUE
+  shiftDates = FALSE,
+  assignNewId = FALSE
 )
 }
 \arguments{
@@ -58,9 +59,11 @@ does not exist it will be created.}
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf'). This will be displayed
 in shiny app to toggle between databases. Should not have space or underscore (_).}
 
-\item{shiftDates}{(Default = TRUE) Do you want to shift dates? This will help further de-identify data. The shift
+\item{shiftDates}{(Default = FALSE) Do you want to shift dates? This will help further de-identify data. The shift
 is the process of recalibrating dates such that all persons min(observation_period_start_date) is
-0000-01-01.}
+2000-01-01.}
+
+\item{assignNewId}{(Default = FALSE) Do you want to assign a newId for persons. This will replace the personId in the source with a randomly assigned newId.}
 }
 \description{
 Export person level data from omop cdm tables from eligible persons in the cohort.

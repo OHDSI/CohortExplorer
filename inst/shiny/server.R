@@ -21,8 +21,6 @@ shinyServer(function(input, output, session) {
   cohortAndObservationPeriod <- shiny::reactive({
     cohortFiltered <- dataFromRds()$cohort %>%
       dplyr::filter(personId == subjectIds()[subject$index]) %>%
-      dplyr::rename(startDate = cohortStartDate,
-                    endDate = cohortEndDate) %>%
       dplyr::mutate(
         domain = "Cohort",
         cdmTable = "Cohort",
@@ -38,12 +36,9 @@ shinyServer(function(input, output, session) {
     
     observationPeriodFiltered <- dataFromRds()$observationPeriod %>%
       dplyr::filter(personId == subjectIds()[subject$index]) %>%
-      dplyr::select(observationPeriodStartDate,
-                    observationPeriodEndDate,
-                    periodTypeConceptId) %>%
-      dplyr::rename(startDate = observationPeriodStartDate,
-                    endDate = observationPeriodEndDate,
-                    typeConceptId = periodTypeConceptId) %>%
+      dplyr::select(startDate,
+                    endDate,
+                    typeConceptId) %>%
       dplyr::mutate(cdmTable = "Observation Period",
                     domain = "Observation Period",
                     conceptName = "Observation Period") %>%
@@ -264,6 +259,14 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  output$cohortName <- shiny::renderText({
+    cohortName <- "Unknown"
+    if (!is.null(dataFromRds()$cohortName)) {
+      cohortName <- dataFromRds()$cohortName
+    }
+    return(cohortName)
+  })
+  
   output$subjectId <- shiny::renderText({
     return(subjectIds()[subject$index])
   })
@@ -333,10 +336,10 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       colors <- colorScale()
-      cdmTables <-
-        aggregate(x = y ~ cdmTable,
-                  data = events,
-                  FUN = max)
+      cdmTables <- events %>% 
+        dplyr::group_by(cdmTable) %>% 
+        dplyr::summarise(y = max(y), .groups = "keep") %>% 
+        dplyr::ungroup()
       cdmTables <- cdmTables[order(cdmTables$cdmTable), ]
       cdmTables$offset <- cumsum(cdmTables$y) - cdmTables$y
       events <- merge(events, cdmTables[, c("cdmTable", "offset")])
@@ -353,7 +356,12 @@ shinyServer(function(input, output, session) {
           events$cdmTable,
           events$typeConceptName
         )
-      eventsPerY <- aggregate(cdmTable ~ y, data = events, length)
+      
+      eventsPerY <- events %>%
+        dplyr::group_by(y) %>%
+        dplyr::summarise(cdmTable = length(y), .groups = "keep") %>% 
+        dplyr::ungroup()
+      
       yGrid <- eventsPerY$y[eventsPerY$cdmTable > 1]
       
       yAxis <- list(
