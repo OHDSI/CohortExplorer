@@ -1,18 +1,11 @@
 # SETUP --------------------------------------------------------------------
 library(magrittr)
 # Pre-requisites ----
-remotes::install_github('OHDSI/CohortExplorer')
+# remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- c(10347,
-                         10345,
-                         10329,
-                         10344,
-                         10349,
-                         10348,
-                         10343,
-                         10328,
-                         10327,
-                         10322)
+cohortDefinitionIds <- c(8865
+
+)
 
 ROhdsiWebApi::authorizeWebApi(baseUrl = Sys.getenv("BaseUrl"), authMethod = "windows")
 cohortDefinitionSet <-
@@ -23,7 +16,7 @@ cohortDefinitionSet <-
   dplyr::arrange(cohortId)
 
 exportFolder <- "c:/temp/CohortExplorer"
-projectCode <- "epi1024CohortDiagnostics"
+projectCode <- "out_phe_"
 
 
 ######################################################################################

@@ -5,7 +5,8 @@
 \title{Export person level data for cohort}
 \usage{
 exportPersonLevelData(
-  connectionDetails,
+  connectionDetails = NULL,
+  connection = NULL,
   cohortDatabaseSchema = "cohort",
   cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
@@ -26,6 +27,12 @@ exportPersonLevelData(
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
+
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cohortDatabaseSchema}{Schema name where your cohort tables reside. Note that for SQL Server,
 this should include both the database and schema name, for example

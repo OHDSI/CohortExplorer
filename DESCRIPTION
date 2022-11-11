@@ -20,11 +20,7 @@ Imports:
     SqlRender
 Suggests:
   Eunomia,
-  remotes,
-  rmarkdown,
-  knitr,
-	testthat,
-	withr
+	testthat
 Remotes:
   ohdsi/Eunomia,
   ohdsi/ParallelLogger
