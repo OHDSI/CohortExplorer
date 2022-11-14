@@ -3,7 +3,7 @@ library(magrittr)
 # Pre-requisites ----
 # remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- c(8865
+cohortDefinitionIds <- c(10393
 
 )
 
@@ -16,7 +16,7 @@ cohortDefinitionSet <-
   dplyr::arrange(cohortId)
 
 exportFolder <- "c:/temp/CohortExplorer"
-projectCode <- "out_phe_"
+projectCode <- "epi1024CohortDiagnostics"
 
 
 ######################################################################################

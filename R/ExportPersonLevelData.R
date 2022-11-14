@@ -159,6 +159,15 @@ exportPersonLevelData <-
       null.ok = TRUE,
       add = errorMessage
     )
+    
+    exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
+    dir.create(path = exportFolder, showWarnings = FALSE, recursive = TRUE)
+    checkmate::assertDirectory(
+      x = exportFolder,
+      access = "x",
+      add = errorMessage
+    )
+    
     checkmate::reportAssertions(collection = errorMessage)
 
     originalDatabaseId <- databaseId
@@ -181,15 +190,6 @@ exportPersonLevelData <-
         originalDatabaseId
       ))
     }
-
-    exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
-
-    errorMessage <-
-      createIfNotExist(
-        type = "folder",
-        name = exportFolder,
-        errorMessage = errorMessage
-      )
 
     rdsFileName <-
       paste0(
