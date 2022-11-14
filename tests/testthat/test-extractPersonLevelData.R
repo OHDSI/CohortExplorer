@@ -5,6 +5,52 @@ test_that("Extract person level data", {
   cohortTableNames <- "cohort"
 
   connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+
+  outputDir <- tempfile()
+
+  # database id has space
+  expect_error(
+    exportPersonLevelData(
+      connectionDetails = connectionDetails,
+      cohortDatabaseSchema = "main",
+      cdmDatabaseSchema = "main",
+      vocabularyDatabaseSchema = "main",
+      cohortTable = "cohort",
+      cohortDefinitionId = c(1),
+      sampleSize = 100,
+      databaseId = "eunomia 001",
+      exportFolder = outputDir
+    )
+  )
+
+  # no cohort table data, also checks if it can connect to data source
+  expect_error(
+    exportPersonLevelData(
+      cohortDatabaseSchema = "main",
+      cdmDatabaseSchema = "main",
+      vocabularyDatabaseSchema = "main",
+      cohortTable = "cohort",
+      cohortDefinitionId = c(1),
+      sampleSize = 100,
+      databaseId = "eunomia",
+      exportFolder = outputDir
+    )
+  )
+
+  expect_warning(
+    exportPersonLevelData(
+      connectionDetails = connectionDetails,
+      cohortDatabaseSchema = "main",
+      cdmDatabaseSchema = "main",
+      vocabularyDatabaseSchema = "main",
+      cohortTable = "cohort",
+      cohortDefinitionId = c(1),
+      sampleSize = 100,
+      databaseId = "eunomia",
+      exportFolder = outputDir
+    )
+  )
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
 
@@ -23,7 +69,6 @@ test_that("Extract person level data", {
             "
   )
 
-  outputDir <- tempfile()
   exportPersonLevelData(
     connection = connection,
     cohortDatabaseSchema = "main",
@@ -40,4 +85,19 @@ test_that("Extract person level data", {
 
   testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer")))
   testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer", "data")))
+
+  exportPersonLevelData(
+    connection = connection,
+    cohortDatabaseSchema = "main",
+    cdmDatabaseSchema = "main",
+    vocabularyDatabaseSchema = "main",
+    cohortTable = "cohort",
+    cohortDefinitionId = c(1),
+    sampleSize = 100,
+    personIds = c(1:100),
+    databaseId = "eunomia",
+    exportFolder = outputDir,
+    assignNewId = TRUE,
+    shiftDates = TRUE
+  )
 })

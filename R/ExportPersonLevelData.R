@@ -155,7 +155,7 @@ exportPersonLevelData <-
     checkmate::assertIntegerish(
       x = personIds,
       lower = 0,
-      len = 1,
+      min.len = 1,
       null.ok = TRUE,
       add = errorMessage
     )
@@ -200,10 +200,6 @@ exportPersonLevelData <-
         ".RData"
       )
 
-    if (file.exists(file.path(exportFolder, rdsFileName))) {
-      warning(paste0("Found previous ", rdsFileName, ". This will be replaced."))
-    }
-
     # Set up connection to server ----------------------------------------------------
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
@@ -215,7 +211,12 @@ exportPersonLevelData <-
     }
 
     if (!is.null(personIds)) {
-      persons <- dplyr::tibble(personId = personIds)
+      persons <- dplyr::tibble(personId = personIds) %>%
+        dplyr::mutate(randomNumber = runif(n = 1)) %>%
+        dplyr::arrange(randomNumber) %>%
+        dplyr::mutate(newId = dplyr::row_number()) %>%
+        dplyr::select(-randomNumber)
+
       DatabaseConnector::insertTable(
         connection = connection,
         tableName = "#persons_filter",
@@ -228,10 +229,11 @@ exportPersonLevelData <-
         camelCaseToSnakeCase = TRUE,
         data = persons
       )
-      sampleSize <- dplyr::nrow(persons)
+      sampleSize <- nrow(persons)
     } else {
       # take a random sample
-      sql <- "SELECT *
+      sql <- "DROP TABLE IF EXISTS #persons_filter;
+              SELECT *
               INTO #persons_filter
               FROM
               (
@@ -960,18 +962,7 @@ exportPersonLevelData <-
       to = file.path(exportFolder, "CohortExplorer", "renv", "settings.dcf")
     )
 
-
-
-    if (file.exists(file.path(exportFolder, "data", rdsFileName))) {
-      unlink(
-        x = file.path(exportFolder, "data", rdsFileName),
-        recursive = TRUE,
-        force = TRUE
-      )
-    }
-
     ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
-
     saveRDS(
       object = results,
       file = file.path(exportFolder, "CohortExplorer", "data", rdsFileName)
