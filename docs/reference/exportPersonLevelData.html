@@ -57,7 +57,8 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">exportPersonLevelData</span><span class="op">(</span></span>
-<span>  <span class="va">connectionDetails</span>,</span>
+<span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cohortDatabaseSchema <span class="op">=</span> <span class="st">"cohort"</span>,</span>
 <span>  <span class="va">cdmDatabaseSchema</span>,</span>
 <span>  vocabularyDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,</span>
@@ -65,11 +66,12 @@
 <span>  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
 <span>  <span class="va">cohortDefinitionId</span>,</span>
 <span>  cohortName <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sampleSize <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  sampleSize <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  personIds <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">exportFolder</span>,</span>
 <span>  <span class="va">databaseId</span>,</span>
-<span>  shiftDates <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  shiftDates <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  assignNewId <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,6 +82,14 @@
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></dd>
+
+
+<dt>connection</dt>
+<dd><p>An object of type <code>connection</code> as created using the
+<code><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></code> function in the
+DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.</p></dd>
 
 
 <dt>cohortDatabaseSchema</dt>
@@ -137,9 +147,13 @@ in shiny app to toggle between databases. Should not have space or underscore (_
 
 
 <dt>shiftDates</dt>
-<dd><p>(Default = TRUE) Do you want to shift dates? This will help further de-identify data. The shift
+<dd><p>(Default = FALSE) Do you want to shift dates? This will help further de-identify data. The shift
 is the process of recalibrating dates such that all persons min(observation_period_start_date) is
-0000-01-01.</p></dd>
+2000-01-01.</p></dd>
+
+
+<dt>assignNewId</dt>
+<dd><p>(Default = FALSE) Do you want to assign a newId for persons. This will replace the personId in the source with a randomly assigned newId.</p></dd>
 
 </dl></div>
 

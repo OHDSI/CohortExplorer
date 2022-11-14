@@ -159,7 +159,7 @@ exportPersonLevelData <-
       null.ok = TRUE,
       add = errorMessage
     )
-    
+
     exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
     dir.create(path = exportFolder, showWarnings = FALSE, recursive = TRUE)
     checkmate::assertDirectory(
@@ -167,7 +167,7 @@ exportPersonLevelData <-
       access = "x",
       add = errorMessage
     )
-    
+
     checkmate::reportAssertions(collection = errorMessage)
 
     originalDatabaseId <- databaseId

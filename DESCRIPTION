@@ -2,7 +2,7 @@ Package: CohortExplorer
 Type: Package
 Title: An R package with a Shiny viewer to explore profiles of patients in a cohort.
 Version: 0.0.1
-Date: 2022-11-08
+Date: 2022-11-14
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
@@ -25,7 +25,7 @@ Remotes:
   ohdsi/Eunomia,
   ohdsi/ParallelLogger
 License: Apache License
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
