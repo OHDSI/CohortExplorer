@@ -235,18 +235,14 @@ exportPersonLevelData <-
               INTO #persons_filter
               FROM
               (
-                SELECT  row_number() OVER (ORDER BY person_id) new_id, person_id
-                  FROM
-                  (
-                    SELECT TOP @sample_size subject_id person_id
-                    FROM (
-                        	SELECT DISTINCT subject_id
-                        	FROM @cohort_database_schema.@cohort_table
-                        	WHERE cohort_definition_id = @cohort_definition_id
-                    	) all_ids
-                    ORDER BY NEWID()
-                ) f
-            ) final;"
+                SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
+                FROM (
+                    	SELECT DISTINCT subject_id person_id
+                    	FROM @cohort_database_schema.@cohort_table
+                    	WHERE cohort_definition_id = @cohort_definition_id
+                	) all_ids
+              ) f
+              WHERE new_id <= @sample_size;"
 
       writeLines("Attempting to find subjects in cohort table.")
       DatabaseConnector::renderTranslateExecuteSql(
