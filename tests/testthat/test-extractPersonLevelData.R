@@ -1,11 +1,35 @@
 test_that("Extract person level data", {
   skip_if(skipCdmTests, "cdm settings not configured")
-
+  
   library(dplyr)
-  cohortTableNames <- "cohort"
+  
+  cohortTable <-
+    paste0("ct_",
+           gsub("[: -]", "", Sys.time(), perl = TRUE),
+           sample(1:100, 1))
+  
+  createCohortTableSql <- "
+    DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
 
+  CREATE TABLE @cohort_database_schema.@cohort_table (
+  	cohort_definition_id BIGINT,
+  	subject_id BIGINT,
+  	cohort_start_date DATE,
+  	cohort_end_date DATE
+  );"
+  
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = DatabaseConnector::connect(connectionDetails),
+    sql = createCohortTableSql,
+    profile = FALSE,
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
+    cohort_database_schema = cohortDatabaseSchema,
+    cohort_table = cohortTable
+  )
+  
   outputDir <- tempfile()
-
+  
   # database id has space
   expect_error(
     exportPersonLevelData(
@@ -13,45 +37,45 @@ test_that("Extract person level data", {
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      cohortTable = "cohort",
+      cohortTable = cohortTable,
       cohortDefinitionId = c(1),
       sampleSize = 100,
       databaseId = "databaseData 001",
       exportFolder = outputDir
     )
   )
-
+  
   # no cohort table data, also checks if it can connect to data source
   expect_error(
     exportPersonLevelData(
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      cohortTable = "cohort",
+      cohortTable = cohortTable,
       cohortDefinitionId = c(1),
       sampleSize = 100,
       databaseId = "databaseData",
       exportFolder = outputDir
     )
   )
-
+  
   expect_warning(
     exportPersonLevelData(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      cohortTable = "cohort",
+      cohortTable = cohortTable,
       cohortDefinitionId = c(1),
       sampleSize = 100,
       databaseId = "databaseData",
       exportFolder = outputDir
     )
   )
-
+  
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-
+  
   # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -67,30 +91,30 @@ test_that("Extract person level data", {
             ",
     cohort_database_schema = cohortDatabaseSchema
   )
-
+  
   exportPersonLevelData(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    cohortTable = "cohort",
+    cohortTable = cohortTable,
     cohortDefinitionId = c(1),
     sampleSize = 100,
     databaseId = "databaseData",
     exportFolder = outputDir
   )
-
+  
   list.files(file.path(outputDir, "CohortExplorer"))
-
+  
   testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer")))
   testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer", "data")))
-
+  
   exportPersonLevelData(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    cohortTable = "cohort",
+    cohortTable = cohortTable,
     cohortDefinitionId = c(1),
     sampleSize = 100,
     personIds = c(1:100),
