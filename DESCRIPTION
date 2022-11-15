@@ -17,7 +17,8 @@ Imports:
   clock,
   dplyr,
   lifecycle,
-  ParallelLogger
+  ParallelLogger,
+  rlang
 Suggests:
   Eunomia,
   testthat,

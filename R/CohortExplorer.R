@@ -19,5 +19,6 @@
 
 #' @importFrom lifecycle deprecated
 #' @import dplyr
+#' @importFrom rlang .data
 #' @import DatabaseConnector
 NULL

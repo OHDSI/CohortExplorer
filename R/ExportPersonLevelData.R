@@ -211,9 +211,9 @@ exportPersonLevelData <-
     if (!is.null(personIds)) {
       persons <- dplyr::tibble(personId = personIds) %>%
         dplyr::mutate(randomNumber = runif(n = 1)) %>%
-        dplyr::arrange(randomNumber) %>%
+        dplyr::arrange(.data$randomNumber) %>%
         dplyr::mutate(newId = dplyr::row_number()) %>%
-        dplyr::select(-randomNumber)
+        dplyr::select(-.data$randomNumber)
 
       DatabaseConnector::insertTable(
         connection = connection,
@@ -304,17 +304,17 @@ exportPersonLevelData <-
     person <- person %>%
       dplyr::inner_join(
         cohort %>%
-          dplyr::group_by(subjectId) %>%
+          dplyr::group_by(.data$subjectId) %>%
           dplyr::summarise(
-            yearOfCohort = min(clock::get_year(startDate)),
+            yearOfCohort = min(clock::get_year(.data$startDate)),
             .groups = "keep"
           ) %>%
           dplyr::ungroup() %>%
-          dplyr::rename("personId" = subjectId),
+          dplyr::rename("personId" = .data$subjectId),
         by = "personId"
       ) %>%
-      dplyr::mutate(age = yearOfCohort - yearOfBirth) %>%
-      dplyr::select(-yearOfCohort, -yearOfBirth)
+      dplyr::mutate(age = .data$yearOfCohort - .data$yearOfBirth) %>%
+      dplyr::select(-.data$yearOfCohort, -.data$yearOfBirth)
 
     writeLines("Getting observation period table.")
     observationPeriod <- DatabaseConnector::renderTranslateQuerySql(
@@ -759,24 +759,24 @@ exportPersonLevelData <-
       dplyr::tibble()
 
     cohort <- cohort %>%
-      dplyr::rename(personId = subjectId)
+      dplyr::rename(personId = .data$subjectId)
 
     subjects <- cohort %>%
-      dplyr::group_by(personId) %>%
-      dplyr::summarise(startDate = min(startDate)) %>%
+      dplyr::group_by(.data$personId) %>%
+      dplyr::summarise(startDate = min(.data$startDate)) %>%
       dplyr::inner_join(person,
         by = "personId"
       ) %>%
       dplyr::inner_join(conceptIds,
         by = c("genderConceptId" = "conceptId")
       ) %>%
-      dplyr::rename(gender = conceptName) %>%
+      dplyr::rename(gender = .data$conceptName) %>%
       dplyr::ungroup()
 
     personMinObservationPeriodDate <- observationPeriod %>%
-      dplyr::group_by(personId) %>%
+      dplyr::group_by(.data$personId) %>%
       dplyr::summarise(
-        minObservationPeriodDate = min(startDate),
+        minObservationPeriodDate = min(.data$startDate),
         .groups = "keep"
       ) %>%
       dplyr::ungroup()
@@ -839,11 +839,11 @@ exportPersonLevelData <-
     replaceId <- function(data, useNewId = TRUE) {
       if (useNewId) {
         data <- data %>%
-          dplyr::select(-personId) %>%
-          dplyr::rename("personId" = newId)
+          dplyr::select(-.data$personId) %>%
+          dplyr::rename("personId" = .data$newId)
       } else {
         data <- data %>%
-          dplyr::select(-newId)
+          dplyr::select(-.data$newId)
       }
       return(data)
     }
