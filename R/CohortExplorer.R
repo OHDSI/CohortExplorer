@@ -18,4 +18,5 @@
 "_PACKAGE"
 
 #' @importFrom lifecycle deprecated
+#' @import dplyr
 NULL
