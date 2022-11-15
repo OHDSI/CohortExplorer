@@ -13,15 +13,17 @@ Depends:
 	DatabaseConnector (>= 5.0.0),
 	R (>= 4.1.0)
 Imports:
-    checkmate,
-    clock,
-    dplyr,
-    lifecycle,
-    ParallelLogger,
-    SqlRender
+  checkmate,
+  clock,
+  dplyr,
+  lifecycle,
+  ParallelLogger,
+  SqlRender,
+  rlang
 Suggests:
   Eunomia,
-	testthat
+  testthat,
+  knitr
 Remotes:
   ohdsi/Eunomia,
   ohdsi/ParallelLogger
