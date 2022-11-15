@@ -10,9 +10,9 @@ test_that("Extract person level data", {
   expect_error(
     exportPersonLevelData(
       connectionDetails = connectionDetails,
-      cohortDatabaseSchema = "main",
-      cdmDatabaseSchema = "main",
-      vocabularyDatabaseSchema = "main",
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       cohortTable = "cohort",
       cohortDefinitionId = c(1),
       sampleSize = 100,
@@ -24,9 +24,9 @@ test_that("Extract person level data", {
   # no cohort table data, also checks if it can connect to data source
   expect_error(
     exportPersonLevelData(
-      cohortDatabaseSchema = "main",
-      cdmDatabaseSchema = "main",
-      vocabularyDatabaseSchema = "main",
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       cohortTable = "cohort",
       cohortDefinitionId = c(1),
       sampleSize = 100,
@@ -38,9 +38,9 @@ test_that("Extract person level data", {
   expect_warning(
     exportPersonLevelData(
       connectionDetails = connectionDetails,
-      cohortDatabaseSchema = "main",
-      cdmDatabaseSchema = "main",
-      vocabularyDatabaseSchema = "main",
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       cohortTable = "cohort",
       cohortDefinitionId = c(1),
       sampleSize = 100,
@@ -55,23 +55,24 @@ test_that("Extract person level data", {
   # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "DELETE FROM main.cohort;
-            INSERT INTO main.cohort
+    sql = "DELETE FROM @cohort_database_schema.cohort;
+            INSERT INTO @cohort_database_schema.cohort
             SELECT cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
             FROM
               (
                 SELECT  1 cohort_definition_id,
                         10 subject_id, CAST('2000-01-01' AS DATE) cohort_start_date,
                         CAST('2010-12-31' AS DATE) cohort_end_date
-              );
-            "
+              ) a;
+            ",
+    cohort_database_schema = cohortDatabaseSchema
   )
 
   exportPersonLevelData(
     connection = connection,
-    cohortDatabaseSchema = "main",
-    cdmDatabaseSchema = "main",
-    vocabularyDatabaseSchema = "main",
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     cohortTable = "cohort",
     cohortDefinitionId = c(1),
     sampleSize = 100,
@@ -86,9 +87,9 @@ test_that("Extract person level data", {
 
   exportPersonLevelData(
     connection = connection,
-    cohortDatabaseSchema = "main",
-    cdmDatabaseSchema = "main",
-    vocabularyDatabaseSchema = "main",
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     cohortTable = "cohort",
     cohortDefinitionId = c(1),
     sampleSize = 100,

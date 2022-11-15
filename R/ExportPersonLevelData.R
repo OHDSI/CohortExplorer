@@ -235,7 +235,7 @@ exportPersonLevelData <-
               INTO #persons_filter
               FROM
               (
-                SELECT NEWID() new_id, person_id
+                SELECT  row_number() OVER (ORDER BY person_id) new_id, person_id
                   FROM
                   (
                     SELECT TOP @sample_size subject_id person_id
@@ -245,7 +245,8 @@ exportPersonLevelData <-
                         	WHERE cohort_definition_id = @cohort_definition_id
                     	) all_ids
                     ORDER BY NEWID()
-                ) final;"
+                ) f
+            ) final;"
 
       writeLines("Attempting to find subjects in cohort table.")
       DatabaseConnector::renderTranslateExecuteSql(
