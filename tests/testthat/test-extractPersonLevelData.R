@@ -79,8 +79,8 @@ test_that("Extract person level data", {
   # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "DELETE FROM @cohort_database_schema.cohort;
-            INSERT INTO @cohort_database_schema.cohort
+    sql = "DELETE FROM @cohort_database_schema.@cohort_table;
+            INSERT INTO @cohort_database_schema.@cohort_table
             SELECT cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
             FROM
               (
@@ -89,7 +89,8 @@ test_that("Extract person level data", {
                         CAST('2010-12-31' AS DATE) cohort_end_date
               ) a;
             ",
-    cohort_database_schema = cohortDatabaseSchema
+    cohort_database_schema = cohortDatabaseSchema,
+    cohort_table = cohortTable
   )
   
   exportPersonLevelData(
