@@ -4,8 +4,6 @@ test_that("Extract person level data", {
   library(dplyr)
   cohortTableNames <- "cohort"
 
-  connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-
   outputDir <- tempfile()
 
   # database id has space
