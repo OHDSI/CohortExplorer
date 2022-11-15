@@ -19,4 +19,5 @@
 
 #' @importFrom lifecycle deprecated
 #' @import dplyr
+#' @import DatabaseConnector
 NULL
