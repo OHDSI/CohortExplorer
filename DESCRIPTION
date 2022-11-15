@@ -22,7 +22,8 @@ Imports:
 Suggests:
   Eunomia,
   testthat,
-  knitr
+  knitr,
+  withr
 Remotes:
   ohdsi/Eunomia,
   ohdsi/ParallelLogger
