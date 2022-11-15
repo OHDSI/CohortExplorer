@@ -16,7 +16,7 @@ test_that("Extract person level data", {
       cohortTable = "cohort",
       cohortDefinitionId = c(1),
       sampleSize = 100,
-      databaseId = "eunomia 001",
+      databaseId = "databaseData 001",
       exportFolder = outputDir
     )
   )
@@ -30,7 +30,7 @@ test_that("Extract person level data", {
       cohortTable = "cohort",
       cohortDefinitionId = c(1),
       sampleSize = 100,
-      databaseId = "eunomia",
+      databaseId = "databaseData",
       exportFolder = outputDir
     )
   )
@@ -44,7 +44,7 @@ test_that("Extract person level data", {
       cohortTable = "cohort",
       cohortDefinitionId = c(1),
       sampleSize = 100,
-      databaseId = "eunomia",
+      databaseId = "databaseData",
       exportFolder = outputDir
     )
   )
@@ -52,7 +52,7 @@ test_that("Extract person level data", {
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
 
-  # create a cohort table using eunomia data
+  # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "DELETE FROM main.cohort;
@@ -75,7 +75,7 @@ test_that("Extract person level data", {
     cohortTable = "cohort",
     cohortDefinitionId = c(1),
     sampleSize = 100,
-    databaseId = "eunomia",
+    databaseId = "databaseData",
     exportFolder = outputDir
   )
 
@@ -93,7 +93,7 @@ test_that("Extract person level data", {
     cohortDefinitionId = c(1),
     sampleSize = 100,
     personIds = c(1:100),
-    databaseId = "eunomia",
+    databaseId = "databaseData",
     exportFolder = outputDir,
     assignNewId = TRUE,
     shiftDates = TRUE
