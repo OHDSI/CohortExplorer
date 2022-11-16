@@ -2,6 +2,7 @@ CohortExplorer 0.0.3
 ======================
 
 Resolving minor issues in github checks. 
+Indentation.
 
 CohortExplorer 0.0.2
 ======================
