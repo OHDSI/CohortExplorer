@@ -1,13 +1,15 @@
 test_that("Extract person level data", {
   skip_if(skipCdmTests, "cdm settings not configured")
-  
+
   library(dplyr)
-  
+
   cohortTable <-
-    paste0("ct_",
-           gsub("[: -]", "", Sys.time(), perl = TRUE),
-           sample(1:100, 1))
-  
+    paste0(
+      "ct_",
+      gsub("[: -]", "", Sys.time(), perl = TRUE),
+      sample(1:100, 1)
+    )
+
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
 
@@ -17,7 +19,7 @@ test_that("Extract person level data", {
   	cohort_start_date DATE,
   	cohort_end_date DATE
   );"
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = DatabaseConnector::connect(connectionDetails),
     sql = createCohortTableSql,
@@ -27,12 +29,12 @@ test_that("Extract person level data", {
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable
   )
-  
+
   outputDir <- tempfile()
-  
+
   # database id has space
   expect_error(
-    exportPersonLevelData(
+    createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -44,10 +46,10 @@ test_that("Extract person level data", {
       exportFolder = outputDir
     )
   )
-  
+
   # no connection or connectionDetails
   expect_error(
-    exportPersonLevelData(
+    createCohortExplorerApp(
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -60,7 +62,7 @@ test_that("Extract person level data", {
   )
   # cohort table has no subjects
   expect_warning(
-    exportPersonLevelData(
+    createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -72,10 +74,10 @@ test_that("Extract person level data", {
       exportFolder = outputDir
     )
   )
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
-  
+
   # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -88,7 +90,7 @@ test_that("Extract person level data", {
             FROM
               (
                 SELECT  1 cohort_definition_id,
-                        10 subject_id, 
+                        10 subject_id,
                         CAST('20000101' AS DATE) cohort_start_date,
                         CAST('20101231' AS DATE) cohort_end_date
               ) a;
@@ -96,8 +98,8 @@ test_that("Extract person level data", {
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable
   )
-  
-  exportPersonLevelData(
+
+  createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -108,13 +110,13 @@ test_that("Extract person level data", {
     databaseId = "databaseData",
     exportFolder = outputDir
   )
-  
+
   list.files(file.path(outputDir, "CohortExplorer"))
-  
+
   testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer")))
   testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer", "data")))
-  
-  exportPersonLevelData(
+
+  createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,

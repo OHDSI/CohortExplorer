@@ -14,10 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Export person level data for cohort
+#' Create Cohort explorer shiny app with person level data
 #'
 #' @description
-#' Export person level data from omop cdm tables from eligible persons in the cohort.
+#' Export person level data from omop cdm tables for eligible persons in the cohort. Creates a folder with files
+#' that are part of the Cohort Explorer Shiny app. This app may then be run to review person level profiles.
 #'
 #' @template Connection
 #'
@@ -60,14 +61,14 @@
 #'   password = "secure"
 #' )
 #'
-#' exportPersonLevelData(
+#' createCohortExplorerApp(
 #'   connectionDetails = connectionDetails,
 #'   cohortDefinitionId = 1234
 #' )
 #' }
 #'
 #' @export
-exportPersonLevelData <-
+createCohortExplorerApp <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema = "cohort",
@@ -495,7 +496,7 @@ exportPersonLevelData <-
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble() %>%
-      dplyr::mutate(endDate = startDate)
+      dplyr::mutate(endDate = .data$startDate)
 
     writeLines("Getting drug exposure table.")
     drugExposure <- DatabaseConnector::renderTranslateQuerySql(
@@ -590,7 +591,7 @@ exportPersonLevelData <-
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
-      dplyr::mutate(endDate = startDate)
+      dplyr::mutate(endDate = .data$startDate)
 
 
     writeLines("Getting concept id.")
@@ -804,8 +805,8 @@ exportPersonLevelData <-
             x = as.Date(originDate),
             n = as.integer(
               difftime(
-                time1 = startDate,
-                time2 = minObservationPeriodDate,
+                time1 = .data$startDate,
+                time2 = .data$minObservationPeriodDate,
                 units = "days"
               )
             )
@@ -818,8 +819,8 @@ exportPersonLevelData <-
             x = as.Date(originDate),
             n = as.integer(
               difftime(
-                time1 = endDate,
-                time2 = minObservationPeriodDate,
+                time1 = .data$endDate,
+                time2 = .data$minObservationPeriodDate,
                 units = "days"
               )
             )
