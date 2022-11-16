@@ -61,7 +61,7 @@ test_that("Extract person level data", {
     )
   )
   # cohort table has no subjects
-  expect_warning(
+  expect_error(
     createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
