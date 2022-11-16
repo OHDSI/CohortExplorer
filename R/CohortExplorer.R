@@ -18,4 +18,8 @@
 "_PACKAGE"
 
 #' @importFrom lifecycle deprecated
+#' @import dplyr
+#' @importFrom rlang .data
+#' @importForm stats runif
+#' @import DatabaseConnector
 NULL

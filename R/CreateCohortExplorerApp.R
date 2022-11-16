@@ -14,10 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Export person level data for cohort
+#' Create Cohort explorer shiny app with person level data
 #'
 #' @description
-#' Export person level data from omop cdm tables from eligible persons in the cohort.
+#' Export person level data from omop cdm tables for eligible persons in the cohort. Creates a folder with files
+#' that are part of the Cohort Explorer Shiny app. This app may then be run to review person level profiles.
 #'
 #' @template Connection
 #'
@@ -60,20 +61,20 @@
 #'   password = "secure"
 #' )
 #'
-#' exportPersonLevelData(
+#' createCohortExplorerApp(
 #'   connectionDetails = connectionDetails,
 #'   cohortDefinitionId = 1234
 #' )
 #' }
 #'
 #' @export
-exportPersonLevelData <-
+createCohortExplorerApp <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema = "cohort",
            cdmDatabaseSchema,
            vocabularyDatabaseSchema = cdmDatabaseSchema,
-           tempEmulationSchema = NULL,
+           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            cohortTable = "cohort",
            cohortDefinitionId,
            cohortName = NULL,
@@ -211,9 +212,9 @@ exportPersonLevelData <-
     if (!is.null(personIds)) {
       persons <- dplyr::tibble(personId = personIds) %>%
         dplyr::mutate(randomNumber = runif(n = 1)) %>%
-        dplyr::arrange(randomNumber) %>%
+        dplyr::arrange(.data$randomNumber) %>%
         dplyr::mutate(newId = dplyr::row_number()) %>%
-        dplyr::select(-randomNumber)
+        dplyr::select(-.data$randomNumber)
 
       DatabaseConnector::insertTable(
         connection = connection,
@@ -235,23 +236,20 @@ exportPersonLevelData <-
               INTO #persons_filter
               FROM
               (
-                SELECT row_number() over() new_id, person_id
-                  FROM
-                  (
-                    SELECT TOP @sample_size subject_id person_id
-                    FROM (
-                        	SELECT DISTINCT subject_id
-                        	FROM @cohort_database_schema.@cohort_table
-                        	WHERE cohort_definition_id = @cohort_definition_id
-                    	) all_ids
-                    ORDER BY NEWID()
-                  ) as output
-                ) final;"
+                SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
+                FROM (
+                    	SELECT DISTINCT subject_id person_id
+                    	FROM @cohort_database_schema.@cohort_table
+                    	WHERE cohort_definition_id = @cohort_definition_id
+                	) all_ids
+              ) f
+              WHERE new_id <= @sample_size;"
 
       writeLines("Attempting to find subjects in cohort table.")
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
         sample_size = sampleSize,
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
@@ -275,6 +273,7 @@ exportPersonLevelData <-
           ORDER BY c.subject_id, cohort_start_date;",
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
+        tempEmulationSchema = tempEmulationSchema,
         cohort_definition_id = cohortDefinitionId,
         snakeCaseToCamelCase = TRUE
       ) %>%
@@ -297,6 +296,7 @@ exportPersonLevelData <-
         ON p.person_id = pf.person_id
         ORDER BY p.person_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -304,17 +304,17 @@ exportPersonLevelData <-
     person <- person %>%
       dplyr::inner_join(
         cohort %>%
-          dplyr::group_by(subjectId) %>%
+          dplyr::group_by(.data$subjectId) %>%
           dplyr::summarise(
-            yearOfCohort = min(clock::get_year(startDate)),
+            yearOfCohort = min(clock::get_year(.data$startDate)),
             .groups = "keep"
           ) %>%
           dplyr::ungroup() %>%
-          dplyr::rename("personId" = subjectId),
+          dplyr::rename("personId" = .data$subjectId),
         by = "personId"
       ) %>%
-      dplyr::mutate(age = yearOfCohort - yearOfBirth) %>%
-      dplyr::select(-yearOfCohort, -yearOfBirth)
+      dplyr::mutate(age = .data$yearOfCohort - .data$yearOfBirth) %>%
+      dplyr::select(-.data$yearOfCohort, -.data$yearOfBirth)
 
     writeLines("Getting observation period table.")
     observationPeriod <- DatabaseConnector::renderTranslateQuerySql(
@@ -332,6 +332,7 @@ exportPersonLevelData <-
                       observation_period_start_date,
                       observation_period_end_date;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -365,6 +366,7 @@ exportPersonLevelData <-
                 visit_type_concept_id,
                 visit_source_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -399,6 +401,7 @@ exportPersonLevelData <-
                   condition_type_concept_id,
                   condition_source_concept_id;",
         cdm_database_schema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
@@ -426,6 +429,7 @@ exportPersonLevelData <-
               condition_era_end_date,
               condition_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -456,6 +460,7 @@ exportPersonLevelData <-
                 observation_concept_id,
                 observation_type_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -487,10 +492,11 @@ exportPersonLevelData <-
                 procedure_type_concept_id,
                 procedure_source_concept_id;",
         cdm_database_schema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble() %>%
-      dplyr::mutate(endDate = startDate)
+      dplyr::mutate(endDate = .data$startDate)
 
     writeLines("Getting drug exposure table.")
     drugExposure <- DatabaseConnector::renderTranslateQuerySql(
@@ -521,6 +527,7 @@ exportPersonLevelData <-
                   drug_type_concept_id,
                   drug_source_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -548,6 +555,7 @@ exportPersonLevelData <-
                   drug_era_end_date,
                   drug_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -579,10 +587,11 @@ exportPersonLevelData <-
                   measurement_type_concept_id,
                   measurement_source_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
-      dplyr::mutate(endDate = startDate)
+      dplyr::mutate(endDate = .data$startDate)
 
 
     writeLines("Getting concept id.")
@@ -754,29 +763,30 @@ exportPersonLevelData <-
         ORDER BY c.concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
       vocabulary_database_schema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
 
     cohort <- cohort %>%
-      dplyr::rename(personId = subjectId)
+      dplyr::rename(personId = .data$subjectId)
 
     subjects <- cohort %>%
-      dplyr::group_by(personId) %>%
-      dplyr::summarise(startDate = min(startDate)) %>%
+      dplyr::group_by(.data$personId) %>%
+      dplyr::summarise(startDate = min(.data$startDate)) %>%
       dplyr::inner_join(person,
         by = "personId"
       ) %>%
       dplyr::inner_join(conceptIds,
         by = c("genderConceptId" = "conceptId")
       ) %>%
-      dplyr::rename(gender = conceptName) %>%
+      dplyr::rename(gender = .data$conceptName) %>%
       dplyr::ungroup()
 
     personMinObservationPeriodDate <- observationPeriod %>%
-      dplyr::group_by(personId) %>%
+      dplyr::group_by(.data$personId) %>%
       dplyr::summarise(
-        minObservationPeriodDate = min(startDate),
+        minObservationPeriodDate = min(.data$startDate),
         .groups = "keep"
       ) %>%
       dplyr::ungroup()
@@ -795,8 +805,8 @@ exportPersonLevelData <-
             x = as.Date(originDate),
             n = as.integer(
               difftime(
-                time1 = startDate,
-                time2 = minObservationPeriodDate,
+                time1 = .data$startDate,
+                time2 = .data$minObservationPeriodDate,
                 units = "days"
               )
             )
@@ -809,8 +819,8 @@ exportPersonLevelData <-
             x = as.Date(originDate),
             n = as.integer(
               difftime(
-                time1 = endDate,
-                time2 = minObservationPeriodDate,
+                time1 = .data$endDate,
+                time2 = .data$minObservationPeriodDate,
                 units = "days"
               )
             )
@@ -839,11 +849,11 @@ exportPersonLevelData <-
     replaceId <- function(data, useNewId = TRUE) {
       if (useNewId) {
         data <- data %>%
-          dplyr::select(-personId) %>%
-          dplyr::rename("personId" = newId)
+          dplyr::select(-.data$personId) %>%
+          dplyr::rename("personId" = .data$newId)
       } else {
         data <- data %>%
-          dplyr::select(-newId)
+          dplyr::select(-.data$newId)
       }
       return(data)
     }
