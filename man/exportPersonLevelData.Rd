@@ -10,7 +10,7 @@ exportPersonLevelData(
   cohortDatabaseSchema = "cohort",
   cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
-  tempEmulationSchema = NULL,
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortTable = "cohort",
   cohortDefinitionId,
   cohortName = NULL,

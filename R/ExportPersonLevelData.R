@@ -73,7 +73,7 @@ exportPersonLevelData <-
            cohortDatabaseSchema = "cohort",
            cdmDatabaseSchema,
            vocabularyDatabaseSchema = cdmDatabaseSchema,
-           tempEmulationSchema = NULL,
+           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            cohortTable = "cohort",
            cohortDefinitionId,
            cohortName = NULL,
@@ -248,6 +248,7 @@ exportPersonLevelData <-
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
         sample_size = sampleSize,
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
@@ -271,6 +272,7 @@ exportPersonLevelData <-
           ORDER BY c.subject_id, cohort_start_date;",
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
+        tempEmulationSchema = tempEmulationSchema,
         cohort_definition_id = cohortDefinitionId,
         snakeCaseToCamelCase = TRUE
       ) %>%
@@ -293,6 +295,7 @@ exportPersonLevelData <-
         ON p.person_id = pf.person_id
         ORDER BY p.person_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -328,6 +331,7 @@ exportPersonLevelData <-
                       observation_period_start_date,
                       observation_period_end_date;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -361,6 +365,7 @@ exportPersonLevelData <-
                 visit_type_concept_id,
                 visit_source_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -395,6 +400,7 @@ exportPersonLevelData <-
                   condition_type_concept_id,
                   condition_source_concept_id;",
         cdm_database_schema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
@@ -422,6 +428,7 @@ exportPersonLevelData <-
               condition_era_end_date,
               condition_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -452,6 +459,7 @@ exportPersonLevelData <-
                 observation_concept_id,
                 observation_type_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -483,6 +491,7 @@ exportPersonLevelData <-
                 procedure_type_concept_id,
                 procedure_source_concept_id;",
         cdm_database_schema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble() %>%
@@ -517,6 +526,7 @@ exportPersonLevelData <-
                   drug_type_concept_id,
                   drug_source_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -544,6 +554,7 @@ exportPersonLevelData <-
                   drug_era_end_date,
                   drug_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -575,6 +586,7 @@ exportPersonLevelData <-
                   measurement_type_concept_id,
                   measurement_source_concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble() %>%
@@ -750,6 +762,7 @@ exportPersonLevelData <-
         ORDER BY c.concept_id;",
       cdm_database_schema = cdmDatabaseSchema,
       vocabulary_database_schema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
