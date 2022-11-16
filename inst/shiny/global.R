@@ -32,6 +32,10 @@ listOfFiles <- listOfFiles %>%
   ) %>%
   dplyr::arrange(cohortId, databaseId)
 
+initialSelectedCohortId <- listOfFiles[1,]$cohortId
+initialSelectedDatabaseId <- listOfFiles[1,]$databaseId
+
+
 tables <- c(
   "conditionEra",
   "conditionOccurrence",
