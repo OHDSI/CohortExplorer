@@ -160,7 +160,11 @@ createCohortExplorerApp <-
     )
 
     exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
-    dir.create(path = exportFolder, showWarnings = FALSE, recursive = TRUE)
+    dir.create(
+      path = exportFolder,
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
     checkmate::assertDirectory(
       x = exportFolder,
       access = "x",
@@ -280,8 +284,7 @@ createCohortExplorerApp <-
       dplyr::tibble()
 
     if (nrow(cohort) == 0) {
-      warning("Cohort does not have the selected subject ids")
-      return(NULL)
+      stop("Cohort does not have the selected subject ids. No shiny app created.")
     }
 
     writeLines("Getting person table.")
