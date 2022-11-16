@@ -45,7 +45,7 @@ test_that("Extract person level data", {
     )
   )
   
-  # no cohort table data, also checks if it can connect to data source
+  # no connection or connectionDetails
   expect_error(
     exportPersonLevelData(
       cohortDatabaseSchema = cohortDatabaseSchema,
@@ -58,7 +58,7 @@ test_that("Extract person level data", {
       exportFolder = outputDir
     )
   )
-  
+  # cohort table has no subjects
   expect_warning(
     exportPersonLevelData(
       connectionDetails = connectionDetails,
@@ -89,8 +89,8 @@ test_that("Extract person level data", {
               (
                 SELECT  1 cohort_definition_id,
                         10 subject_id, 
-                        CAST('2000-01-01' AS DATE) cohort_start_date,
-                        CAST('2010-12-31' AS DATE) cohort_end_date
+                        CAST('20000101' AS DATE) cohort_start_date,
+                        CAST('20101231' AS DATE) cohort_end_date
               ) a;
             ",
     cohort_database_schema = cohortDatabaseSchema,
