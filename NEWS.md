@@ -1,3 +1,8 @@
+CohortExplorer 0.0.4
+======================
+
+Bug fix to shiny.
+
 CohortExplorer 0.0.3
 ======================
 
