@@ -20,6 +20,6 @@
 #' @importFrom lifecycle deprecated
 #' @import dplyr
 #' @importFrom rlang .data
-#' @importForm stats runif
+#' @importFrom stats runif
 #' @import DatabaseConnector
 NULL
