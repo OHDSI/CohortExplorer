@@ -30,7 +30,7 @@ Features
 Screenshot
 ==========
 
-![CohortExplorer Shiny app screenshot](https://github.com/OHDSI/CohortExplorer/raw/main/extras/Screenshot.png "CohortExplorer Shiny app"")
+![CohortExplorer Shiny app screenshot](https://github.com/OHDSI/CohortExplorer/raw/main/extras/Screenshot.png "CohortExplorer Shiny app")
 
 How to use
 ==========
