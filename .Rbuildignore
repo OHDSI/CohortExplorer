@@ -11,3 +11,4 @@ readme.md
 ^compare_versions
 ^deploy.sh
 ^docs
+^man-roxygen
