@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">CohortExplorer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
       </span>
     </div>
 
@@ -73,6 +73,7 @@
 <div class="page-header"><h1 id="cohortexplorer">CohortExplorer<a class="anchor" aria-label="anchor" href="#cohortexplorer"></a>
 </h1></div>
 
+<p>CohortMethod is part of <a href="https://ohdsi.github.io/Hades" class="external-link">HADES</a>.</p>
 </div>
 <div class="section level1">
 <h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
@@ -96,8 +97,15 @@
 <li>Extracts person level data for each person from the common data model, and constructs a results object in rds form. This rds object has person level data with personId and dates.</li>
 <li>Accepts a set of configurable parameters for the shiny application. This parameters will be chosen in the shiny app. e.g. regular expression.</li>
 <li>Allows additional de-identification using two optional mechanisms (shift dates and replace OMOP personId with a new random id). Shift date: shifts all dates so that the first observation_period_start_date for a person is set to January 1st 2000, and all other dates are shifted in relation to this date. Also creates and replaces the source personId with a new randomly generated id.</li>
-<li>Creates a R shiny app in a specified local folder (zipped), that can then be published to a shiny server or explored locally.</li>
+<li>Creates a R shiny app in a specified local folder, that can then be published to a shiny server or explored locally.</li>
 </ul>
+</div>
+<div class="section level1">
+<h1 id="screenshot">Screenshot<a class="anchor" aria-label="anchor" href="#screenshot"></a>
+</h1>
+<div class="figure">
+<img src="https://github.com/OHDSI/CohortExplorer/raw/main/extras/Screenshot.png" title="CohortExplorer Shiny app" alt=""><p class="caption">CohortExplorer Shiny app screenshot</p>
+</div>
 </div>
 <div class="section level1">
 <h1 id="how-to-use">How to use<a class="anchor" aria-label="anchor" href="#how-to-use"></a>

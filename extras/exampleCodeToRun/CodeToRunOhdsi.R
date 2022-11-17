@@ -1,22 +1,26 @@
 # SETUP --------------------------------------------------------------------
 library(magrittr)
 # Pre-requisites ----
-remotes::install_github('OHDSI/CohortExplorer')
+# remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- c(10393
+cohortDefinitionIds <- c(63)
 
+ROhdsiWebApi::authorizeWebApi(
+  baseUrl = Sys.getenv("ohdsiAtlasPhenotype"),
+  authMethod = "db",
+  webApiUsername = keyring::key_get("ohdsiAtlasPhenotypeUser"),
+  webApiPassword = keyring::key_get("ohdsiAtlasPhenotypePassword")
 )
 
-ROhdsiWebApi::authorizeWebApi(baseUrl = Sys.getenv("BaseUrl"), authMethod = "windows")
 cohortDefinitionSet <-
-  ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = Sys.getenv("BaseUrl")) %>%
+  ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = Sys.getenv("ohdsiAtlasPhenotype")) %>%
   dplyr::filter(id %in% c(cohortDefinitionIds)) %>%
   dplyr::select(id, name) %>%
   dplyr::rename(cohortId = id, cohortName = name) %>%
   dplyr::arrange(cohortId)
 
 exportFolder <- "c:/temp/CohortExplorer"
-projectCode <- "epi1024CohortDiagnostics"
+projectCode <- "pl_"
 
 
 ######################################################################################
@@ -55,20 +59,26 @@ for (i in (1:length(databaseIds))) {
       )
     
     cohortTableName <- paste0(stringr::str_squish(projectCode),
-                              stringr::str_squish(cdmSource$sourceId))
+                              stringr::str_squish(cdmSource$database))
     
     # EXECUTE --------------------------------------------------------------------
-    CohortExplorer::exportPersonLevelData(
-      connectionDetails = connectionDetails,
-      cohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
-      cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
-      vocabularyDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
-      cohortTable = cohortTableName,
-      cohortDefinitionId = cohortDefinitionSet[j, ]$cohortId,
-      cohortName = cohortDefinitionSet[j, ]$cohortName,
-      exportFolder = exportFolder,
-      databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
-      shiftDate = TRUE
+    tryCatch(
+      expr = {
+        CohortExplorer::createCohortExplorerApp(
+          connectionDetails = connectionDetails,
+          cohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
+          cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
+          vocabularyDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
+          cohortTable = cohortTableName,
+          cohortDefinitionId = cohortDefinitionSet[j, ]$cohortId,
+          cohortName = cohortDefinitionSet[j, ]$cohortName,
+          exportFolder = exportFolder,
+          databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
+          shiftDate = TRUE
+        )
+      },
+      error = function(e) {
+      }
     )
   }
 }
