@@ -51,7 +51,9 @@ CohortExplorer::createCohortExplorerApp(
   cohortTable = cohortTable,
   cohortDefinitionId = cohortDefinitionId,
   exportFolder = exportFolder,
-  databaseId = databaseId
+  databaseId = databaseId,
+  shiftDates = TRUE,
+  assignNewId = TRUE
 )
 
 # Code to verify all temp tables have been cleaned up:
