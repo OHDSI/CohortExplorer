@@ -1,7 +1,7 @@
 # SETUP --------------------------------------------------------------------
 library(magrittr)
 # Pre-requisites ----
-remotes::install_github('OHDSI/CohortExplorer')
+# remotes::install_github('OHDSI/CohortExplorer')
 
 cohortDefinitionIds <- c(63)
 

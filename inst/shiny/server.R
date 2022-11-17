@@ -65,19 +65,36 @@ shinyServer(function(input, output, session) {
       return(cohortAndObservationPeriod())
     } else {
       if (input$filterRegex != "") {
-        filteredConceptIds <- filteredConceptIds %>%
-          dplyr::filter(stringr::str_detect(
-            string = tolower(conceptName),
-            pattern = tolower(input$filterRegex)
-          ))
+        tryCatch(
+          expr = {
+            filteredConceptIds <- filteredConceptIds %>%
+              dplyr::filter(stringr::str_detect(
+                string = tolower(conceptName),
+                pattern = tolower(input$filterRegex)
+              ))
+          },
+          error = function(e) {
+            showNotification("please check the regular expression for error", "", type = "error")
+            return()
+          }
+        )
       }
+      
       if (input$deleteRegex != "") {
-        filteredConceptIds <- filteredConceptIds %>%
-          dplyr::filter(stringr::str_detect(
-            string = tolower(conceptName),
-            pattern = tolower(input$deleteRegex),
-            negate = TRUE
-          ))
+        tryCatch(
+          expr = {
+            filteredConceptIds <- filteredConceptIds %>%
+              dplyr::filter(stringr::str_detect(
+                string = tolower(conceptName),
+                pattern = tolower(input$deleteRegex),
+                negate = TRUE
+              ))
+          },
+          error = function(e) {
+            showNotification("please check the regular expression for error", "", type = "error")
+            return()
+          }
+        )
       }
       
       selectedCdmTables <-

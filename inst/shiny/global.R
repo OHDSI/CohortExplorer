@@ -6,8 +6,17 @@ if (file.exists("R/Default.R")) {
   source("R/Default.R")
 }
 
+files <- list.files(path = file.path("data"), pattern = ".RData")
+if (length(files) == 0) {
+  stop("No .RData found in data folder.")
+}
+
 listOfFiles <-
-  dplyr::tibble(files = list.files(path = file.path("data"), pattern = ".RData"))
+  dplyr::tibble(files = files)
+
+if (nrow(listOfFiles) == 0) {
+  stop("No data found.")
+}
 
 listOfFiles$newName <-
   gsub(
@@ -32,8 +41,12 @@ listOfFiles <- listOfFiles %>%
   ) %>%
   dplyr::arrange(cohortId, databaseId)
 
-initialSelectedCohortId <- listOfFiles[1,]$cohortId
-initialSelectedDatabaseId <- listOfFiles[1,]$databaseId
+
+
+browser()
+
+initialSelectedCohortId <- listOfFiles[1, ]$cohortId
+initialSelectedDatabaseId <- listOfFiles[1, ]$databaseId
 
 
 tables <- c(
