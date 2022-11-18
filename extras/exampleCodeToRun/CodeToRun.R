@@ -58,7 +58,7 @@ for (i in (1:length(databaseIds))) {
                               stringr::str_squish(cdmSource$sourceId))
     
     # EXECUTE --------------------------------------------------------------------
-    CohortExplorer::exportPersonLevelData(
+    CohortExplorer::createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
       cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),

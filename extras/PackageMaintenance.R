@@ -24,6 +24,12 @@ unlink("extras/CohortExplorer.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortExplorer.pdf")
 
 # Create Vignettes---------------------------------------------------------
+rmarkdown::render("vignettes/HowToUseCohortExplorer.Rmd",
+                  output_file = "../inst/doc/HowToUseCohortExplorer.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
 
 # Build site---------------------------------------------------------
 pkgdown::build_site()

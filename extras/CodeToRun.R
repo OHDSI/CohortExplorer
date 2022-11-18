@@ -15,7 +15,7 @@ connectionDetails <-
   )
 
 # EXECUTE --------------------------------------------------------------------
-CohortExplorer::exportPersonLevelData(
+CohortExplorer::createCohortExplorerApp(
   connectionDetails = connectionDetails,
   cohortDatabaseSchema = "cohort",
   cdmDatabaseSchema = "cdm",

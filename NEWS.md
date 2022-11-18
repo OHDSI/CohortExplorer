@@ -1,3 +1,9 @@
+CohortExplorer 0.0.5
+======================
+
+Add vignette.
+Minor optimization to how shiny app is created.
+
 CohortExplorer 0.0.4
 ======================
 

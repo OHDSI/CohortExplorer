@@ -4,7 +4,7 @@ CohortExplorer
 [![Build Status](https://github.com/OHDSI/CohortExplorer/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/CohortExplorer/actions?query=workflow%3AR-CMD-check)
 [![codecov.io](https://codecov.io/github/OHDSI/CohortExplorer/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/CohortExplorer?branch=main)
 
-CohortMethod is part of [HADES](https://ohdsi.github.io/Hades).
+CohortExplorer is part of [HADES](https://ohdsi.github.io/Hades).
 
 Introduction
 ============
