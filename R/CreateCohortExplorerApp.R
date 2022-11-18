@@ -925,84 +925,62 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     sampleFound = nrow(subjects)
   )
 
-  dir.create(
-    path = file.path(exportFolder, "CohortExplorer"),
-    showWarnings = FALSE,
-    recursive = TRUE
+  filesToCopys <- dplyr::tibble(
+    fullPath = list.files(
+      path = system.file("shiny", package = utils::packageName()),
+      include.dirs = TRUE,
+      all.files = TRUE,
+      recursive = TRUE,
+      full.names = TRUE
+    )
   )
-  dir.create(
-    path = file.path(exportFolder, "CohortExplorer", "data"),
-    showWarnings = FALSE,
-    recursive = TRUE
-  )
-  dir.create(
-    path = file.path(exportFolder, "CohortExplorer", "R"),
-    showWarnings = FALSE,
-    recursive = TRUE
-  )
-  dir.create(
-    path = file.path(exportFolder, "CohortExplorer", "renv"),
-    showWarnings = FALSE,
-    recursive = TRUE
-  )
+  filesToCopys$relativePath <-
+    gsub(
+      pattern = paste0(system.file("shiny", package = utils::packageName()), "/"),
+      replacement = "",
+      fixed = TRUE,
+      x = filesToCopys$fullPath
+    )
 
-  file.copy(
-    from = system.file("shiny", "CohortExplorer.Rproj", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "CohortExplorer.Rproj")
-  )
-  file.copy(
-    from = system.file("shiny", "global.R", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "global.R")
-  )
-  file.copy(
-    from = system.file("shiny", "ui.R", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "ui.R")
-  )
-  file.copy(
-    from = system.file("shiny", "server.R", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "server.R")
-  )
-  file.copy(
-    from = system.file("shiny", "renv.lock", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "renv.lock")
-  )
-  file.copy(
-    from = system.file("shiny", ".Rprofile", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", ".Rprofile")
-  )
-  file.copy(
-    from = system.file("shiny", "R", "widgets.R", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "R", "widgets.R")
-  )
-  file.copy(
-    from = system.file("shiny", "R", "private.R", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "R", "private.R")
-  )
-  file.copy(
-    from = system.file("shiny", "renv.lock", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "renv.lock")
-  )
-  file.copy(
-    from = system.file("shiny", "renv", ".gitignore", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "renv", ".gitignore")
-  )
-  file.copy(
-    from = system.file("shiny", "renv", "activate.R", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "renv", "activate.R")
-  )
-  file.copy(
-    from = system.file("shiny", "renv", "settings.dcf", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "renv", "settings.dcf")
-  )
-  file.copy(
-    from = system.file("shiny", "README.md", package = utils::packageName()),
-    to = file.path(exportFolder, "CohortExplorer", "README.md")
-  )
+  for (i in (1:nrow(filesToCopys))) {
+    dir.create(
+      path = dirname(
+        file.path(
+          exportFolder,
+          "CohortExplorerShiny",
+          filesToCopys[i, ]$relativePath
+        )
+      ),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    file.copy(
+      from = filesToCopys[i, ]$fullPath,
+      to = dirname(
+        file.path(
+          exportFolder,
+          "CohortExplorerShiny",
+          filesToCopys[i, ]$relativePath
+        )
+      ),
+      overwrite = TRUE,
+      recursive = TRUE
+    )
+  }
 
   ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
+  dir.create(
+    path = (file.path(
+      exportFolder,
+      "CohortExplorerShiny",
+      "data"
+    )),
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
   saveRDS(
     object = results,
-    file = file.path(exportFolder, "CohortExplorer", "data", rdsFileName)
+    file = file.path(exportFolder, "CohortExplorerShiny", "data", rdsFileName)
   )
 
   delta <- Sys.time() - startTime

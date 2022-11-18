@@ -111,10 +111,8 @@ test_that("Extract person level data", {
     exportFolder = outputDir
   )
 
-  list.files(file.path(outputDir, "CohortExplorer"))
-
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer")))
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorer", "data")))
+  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny")))
+  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data")))
 
   createCohortExplorerApp(
     connection = connection,
