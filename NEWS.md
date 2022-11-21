@@ -1,3 +1,8 @@
+CohortExplorer 0.0.6
+======================
+
+Remove rouge browser()
+
 CohortExplorer 0.0.5
 ======================
 

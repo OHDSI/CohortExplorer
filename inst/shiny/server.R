@@ -187,12 +187,14 @@ shinyServer(function(input, output, session) {
                                data) %>%
         dplyr::mutate(daysToFirst = firstOccurrenceDateValue - startDate)
       
-      if (!is.null(input$daysFromCohortStart)) {
+      if (all(!is.null(input$daysFromCohortStart),
+              input$daysFromCohortStart != '')) {
         data <- data %>%
           dplyr::filter(as.integer(daysToFirst) * -1 <= input$daysFromCohortStart)
       }
       
-      if (!is.null(input$daysToCohortStart)) {
+      if (all(!is.null(input$daysToCohortStart),
+              input$daysFromCohortStart != '')) {
         data <- data %>%
           dplyr::filter(as.integer(daysToFirst) <= input$daysToCohortStart)
       }
