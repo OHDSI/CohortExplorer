@@ -42,9 +42,6 @@ listOfFiles <- listOfFiles %>%
   dplyr::arrange(cohortId, databaseId)
 
 
-
-browser()
-
 initialSelectedCohortId <- listOfFiles[1, ]$cohortId
 initialSelectedDatabaseId <- listOfFiles[1, ]$databaseId
 
