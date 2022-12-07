@@ -274,9 +274,8 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               	) all_ids
             ) f
             WHERE new_id <= @sample_size;"
-  }
-  
-    writeLines("Attempting to find subjects in cohort table.")
+    
+    writeLines("Attempting to find random subjects.")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -287,7 +286,8 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       cohort_definition_id = cohortDefinitionId,
       do_not_export_cohort_data = doNotExportCohortData
     )
-
+  }
+  
   writeLines("Getting cohort table.")
   cohort <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
