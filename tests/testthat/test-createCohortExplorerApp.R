@@ -128,4 +128,20 @@ test_that("Extract person level data", {
     assignNewId = TRUE,
     shiftDates = TRUE
   )
+  
+  createCohortExplorerApp(
+    connection = connection,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortDefinitionId = c(1),
+    sampleSize = 100,
+    doNotExportCohortData = TRUE,
+    databaseId = "databaseData",
+    exportFolder = outputDir
+  )
+  
+  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data", "CohortExplorer_0_databaseData.RData")))
+
 })

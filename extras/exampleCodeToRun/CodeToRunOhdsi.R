@@ -3,7 +3,7 @@ library(magrittr)
 # Pre-requisites ----
 # remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- c(63)
+cohortDefinitionIds <- c(256)
 
 ROhdsiWebApi::authorizeWebApi(
   baseUrl = Sys.getenv("ohdsiAtlasPhenotype"),
@@ -19,7 +19,7 @@ cohortDefinitionSet <-
   dplyr::rename(cohortId = id, cohortName = name) %>%
   dplyr::arrange(cohortId)
 
-exportFolder <- "c:/temp/CohortExplorer"
+exportFolder <- "d:/temp/CohortExplorer"
 projectCode <- "pl_"
 
 
@@ -59,7 +59,7 @@ for (i in (1:length(databaseIds))) {
       )
     
     cohortTableName <- paste0(stringr::str_squish(projectCode),
-                              stringr::str_squish(cdmSource$database))
+                              stringr::str_squish(cdmSource$sourceKey))
     
     # EXECUTE --------------------------------------------------------------------
     tryCatch(

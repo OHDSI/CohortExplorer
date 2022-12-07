@@ -3,9 +3,7 @@ library(magrittr)
 # Pre-requisites ----
 remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- c(10393
-
-)
+cohortDefinitionIds <- c(10393)
 
 ROhdsiWebApi::authorizeWebApi(baseUrl = Sys.getenv("BaseUrl"), authMethod = "windows")
 cohortDefinitionSet <-
