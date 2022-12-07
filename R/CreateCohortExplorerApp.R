@@ -35,6 +35,11 @@
 #' @param cohortDefinitionId          The cohort id to extract records.
 #'
 #' @param cohortName                  (optional) Cohort Name
+#' 
+#' @param doNotExportCohortData       (Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId, 
+#'                                     cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire 
+#'                                     observation period would be considered the cohort. Cohort Name will be 'Observation Period', cohort
+#'                                     id will be set to 0.
 #'
 #' @param sampleSize                  (Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.
 #'
@@ -77,6 +82,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                                     cohortTable = "cohort",
                                     cohortDefinitionId,
                                     cohortName = NULL,
+                                    doNotExportCohortData = FALSE,
                                     sampleSize = 25,
                                     personIds = NULL,
                                     exportFolder,
@@ -87,6 +93,23 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   errorMessage <- checkmate::makeAssertCollection()
 
+  checkmate::assertLogical(
+    x = doNotExportCohortData,
+    any.missing = FALSE,
+    len = 1,
+    min.len = 1,
+    null.ok = FALSE,
+    add = errorMessage
+  )
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  if (doNotExportCohortData) {
+    cohortDatabaseSchema <- cdmDatabaseSchema
+    cohortDefinitionId <- 0
+    cohortName = "Observation Period"
+    cohortTable = "observation_period"
+  }
+  
   checkmate::assertCharacter(
     x = cohortDatabaseSchema,
     min.len = 1,
@@ -236,19 +259,23 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   } else {
     # take a random sample
     sql <- "DROP TABLE IF EXISTS #persons_filter;
-              SELECT *
-              INTO #persons_filter
-              FROM
-              (
-                SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
-                FROM (
-                    	SELECT DISTINCT subject_id person_id
-                    	FROM @cohort_database_schema.@cohort_table
-                    	WHERE cohort_definition_id = @cohort_definition_id
-                	) all_ids
-              ) f
-              WHERE new_id <= @sample_size;"
-
+            SELECT *
+            INTO #persons_filter
+            FROM
+            (
+              SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
+              FROM (
+                  	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
+                      	                            FROM @cohort_database_schema.@cohort_table
+                      	                            WHERE cohort_definition_id = @cohort_definition_id} : {
+                                                  	SELECT DISTINCT person_id
+                                                  	FROM @cohort_database_schema.@cohort_table
+                                                  	}
+              	) all_ids
+            ) f
+            WHERE new_id <= @sample_size;"
+  }
+  
     writeLines("Attempting to find subjects in cohort table.")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
@@ -257,26 +284,31 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       sample_size = sampleSize,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      cohort_definition_id = cohortDefinitionId
+      cohort_definition_id = cohortDefinitionId,
+      do_not_export_cohort_data = doNotExportCohortData
     )
-  }
 
   writeLines("Getting cohort table.")
   cohort <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
-    sql = "SELECT c.subject_id,
-                      p.new_id,
-              	cohort_start_date AS start_date,
-              	cohort_end_date AS end_date
+    sql = "SELECT {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id subject_id},
+                  p.new_id,
+                  {!@do_not_export_cohort_data} ? {cohort_start_date AS start_date,
+              	                              cohort_end_date AS end_date} : {
+              	                              observation_period_start_date AS start_date,
+              	                              observation_period_end_date AS end_date
+              	                              }
               FROM @cohort_database_schema.@cohort_table c
               INNER JOIN #persons_filter p
-              ON c.subject_id = p.person_id
-              WHERE cohort_definition_id = @cohort_definition_id
-          ORDER BY c.subject_id, cohort_start_date;",
+              ON {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id} = p.person_id
+              {!@do_not_export_cohort_data} ? {WHERE cohort_definition_id = @cohort_definition_id}
+          ORDER BY {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id}, 
+                    {!@do_not_export_cohort_data} ? {cohort_start_date} : {observation_period_start_date};",
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable,
     tempEmulationSchema = tempEmulationSchema,
     cohort_definition_id = cohortDefinitionId,
+    do_not_export_cohort_data = doNotExportCohortData,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()

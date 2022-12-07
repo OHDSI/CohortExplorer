@@ -14,6 +14,7 @@ createCohortExplorerApp(
   cohortTable = "cohort",
   cohortDefinitionId,
   cohortName = NULL,
+  doNotExportCohortData = FALSE,
   sampleSize = 25,
   personIds = NULL,
   exportFolder,
@@ -55,6 +56,11 @@ privileges where temp tables can be created.}
 \item{cohortDefinitionId}{The cohort id to extract records.}
 
 \item{cohortName}{(optional) Cohort Name}
+
+\item{doNotExportCohortData}{(Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId,
+cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire
+observation period would be considered the cohort. Cohort Name will be 'Observation Period', cohort
+id will be set to 0.}
 
 \item{sampleSize}{(Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.}
 
