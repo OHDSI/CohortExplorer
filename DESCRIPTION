@@ -1,7 +1,7 @@
 Package: CohortExplorer
 Type: Package
 Title: An R package with a Shiny viewer to explore profiles of patients in a cohort
-Version: 0.0.8
+Version: 0.0.9
 Date: 2022-12-07
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),

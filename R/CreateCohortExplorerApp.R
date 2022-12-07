@@ -35,9 +35,9 @@
 #' @param cohortDefinitionId          The cohort id to extract records.
 #'
 #' @param cohortName                  (optional) Cohort Name
-#' 
-#' @param doNotExportCohortData       (Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId, 
-#'                                     cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire 
+#'
+#' @param doNotExportCohortData       (Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId,
+#'                                     cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire
 #'                                     observation period would be considered the cohort. Cohort Name will be 'Observation Period', cohort
 #'                                     id will be set to 0.
 #'
@@ -102,14 +102,14 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
-  
+
   if (doNotExportCohortData) {
     cohortDatabaseSchema <- cdmDatabaseSchema
     cohortDefinitionId <- 0
-    cohortName = "Observation Period"
-    cohortTable = "observation_period"
+    cohortName <- "Observation Period"
+    cohortTable <- "observation_period"
   }
-  
+
   checkmate::assertCharacter(
     x = cohortDatabaseSchema,
     min.len = 1,
@@ -274,7 +274,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               	) all_ids
             ) f
             WHERE new_id <= @sample_size;"
-    
+
     writeLines("Attempting to find random subjects.")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
@@ -287,7 +287,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       do_not_export_cohort_data = doNotExportCohortData
     )
   }
-  
+
   writeLines("Getting cohort table.")
   cohort <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -302,7 +302,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               INNER JOIN #persons_filter p
               ON {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id} = p.person_id
               {!@do_not_export_cohort_data} ? {WHERE cohort_definition_id = @cohort_definition_id}
-          ORDER BY {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id}, 
+          ORDER BY {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id},
                     {!@do_not_export_cohort_data} ? {cohort_start_date} : {observation_period_start_date};",
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable,
