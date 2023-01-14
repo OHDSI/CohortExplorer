@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortExplorer
 #
@@ -173,12 +173,11 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     )
   }
 
-  checkmate::assertIntegerish(
+  checkmate::assert_double(
     x = personIds,
     lower = 0,
     min.len = 1,
-    null.ok = TRUE,
-    add = errorMessage
+    null.ok = TRUE
   )
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
@@ -314,7 +313,8 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     dplyr::tibble()
 
   if (nrow(cohort) == 0) {
-    stop("Cohort does not have the selected subject ids. No shiny app created.")
+    warning("Cohort does not have the selected subject ids. No shiny app created.")
+    return(NULL)
   }
 
   writeLines("Getting person table.")
