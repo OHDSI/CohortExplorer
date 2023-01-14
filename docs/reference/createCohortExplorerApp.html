@@ -18,7 +18,7 @@ that are part of the Cohort Explorer Shiny app. This app may then be run to revi
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortExplorer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.9</span>
       </span>
     </div>
 
@@ -78,6 +78,7 @@ that are part of the Cohort Explorer Shiny app. This app may then be run to revi
 <span>  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
 <span>  <span class="va">cohortDefinitionId</span>,</span>
 <span>  cohortName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  doNotExportCohortData <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sampleSize <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  personIds <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">exportFolder</span>,</span>
@@ -138,6 +139,13 @@ privileges where temp tables can be created.</p></dd>
 
 <dt>cohortName</dt>
 <dd><p>(optional) Cohort Name</p></dd>
+
+
+<dt>doNotExportCohortData</dt>
+<dd><p>(Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId,
+cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire
+observation period would be considered the cohort. Cohort Name will be 'Observation Period', cohort
+id will be set to 0.</p></dd>
 
 
 <dt>sampleSize</dt>
