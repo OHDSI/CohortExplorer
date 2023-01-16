@@ -171,14 +171,14 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       null.ok = TRUE,
       add = errorMessage
     )
+  } else {
+    checkmate::assertIntegerish(
+      x = personIds,
+      lower = 0,
+      min.len = 1,
+      null.ok = TRUE
+    )
   }
-
-  checkmate::assert_double(
-    x = personIds,
-    lower = 0,
-    min.len = 1,
-    null.ok = TRUE
-  )
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
 
@@ -219,7 +219,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   rdsFileName <- paste0(
     "CohortExplorer_",
-    cohortDefinitionId,
+    abs(cohortDefinitionId),
     "_",
     databaseId,
     ".RData"
@@ -347,7 +347,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       by = "personId"
     ) %>%
     dplyr::mutate(age = .data$yearOfCohort - .data$yearOfBirth) %>%
-    dplyr::select(-.data$yearOfCohort, -.data$yearOfBirth)
+    dplyr::select(-"yearOfCohort", -"yearOfBirth")
 
   writeLines("Getting observation period table.")
   observationPeriod <- DatabaseConnector::renderTranslateQuerySql(
@@ -894,7 +894,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
         dplyr::rename("personId" = .data$newId)
     } else {
       data <- data %>%
-        dplyr::select(-.data$newId)
+        dplyr::select(-"newId")
     }
     return(data)
   }

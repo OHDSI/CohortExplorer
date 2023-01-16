@@ -1,3 +1,23 @@
+CohortExplorer 0.0.10
+======================
+
+Minor bug fixes
+
+CohortExplorer 0.0.9
+======================
+
+Skipped
+
+CohortExplorer 0.0.8
+======================
+
+Skipped
+
+CohortExplorer 0.0.7
+======================
+
+Ability to use the observation period as the cohort table
+
 CohortExplorer 0.0.6
 ======================
 
