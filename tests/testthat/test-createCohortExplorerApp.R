@@ -142,5 +142,5 @@ test_that("Extract person level data", {
     exportFolder = outputDir
   )
 
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data", "CohortExplorer_0_databaseData.RData")))
+  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data", "CohortExplorer_0_databaseData.rds")))
 })
