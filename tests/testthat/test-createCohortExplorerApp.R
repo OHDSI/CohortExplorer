@@ -3,13 +3,6 @@ test_that("Extract person level data", {
 
   library(dplyr)
 
-  cohortTable <-
-    paste0(
-      "ct_",
-      gsub("[: -]", "", Sys.time(), perl = TRUE),
-      sample(1:100, 1)
-    )
-
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
 
@@ -75,8 +68,8 @@ test_that("Extract person level data", {
     )
   )
 
-  connection <-
-    DatabaseConnector::connect(connectionDetails = connectionDetails)
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
 
   # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
