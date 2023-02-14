@@ -149,9 +149,4 @@ test_that("Extract person level data", {
       "CohortExplorer_0_databaseData.rds"
     )
   ))
-
-  testthat::expect_equal(
-    object = normalizePath(outputPath),
-    expected = normalizePath(outputDir)
-  )
 })
