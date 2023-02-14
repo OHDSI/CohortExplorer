@@ -222,7 +222,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     abs(cohortDefinitionId),
     "_",
     databaseId,
-    ".RData"
+    ".rds"
   )
 
   # Set up connection to server ----------------------------------------------------
@@ -979,7 +979,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       path = dirname(
         file.path(
           exportFolder,
-          "CohortExplorerShiny",
           filesToCopys[i, ]$relativePath
         )
       ),
@@ -991,7 +990,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       to = dirname(
         file.path(
           exportFolder,
-          "CohortExplorerShiny",
           filesToCopys[i, ]$relativePath
         )
       ),
@@ -1001,10 +999,10 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   }
 
   ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
+
   dir.create(
     path = (file.path(
       exportFolder,
-      "CohortExplorerShiny",
       "data"
     )),
     showWarnings = FALSE,
@@ -1012,7 +1010,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   )
   saveRDS(
     object = results,
-    file = file.path(exportFolder, "CohortExplorerShiny", "data", rdsFileName)
+    file = file.path(exportFolder, "data", rdsFileName)
   )
 
   delta <- Sys.time() - startTime
@@ -1023,8 +1021,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     attr(delta, "units")
   )
   message(
-    sprintf("The CohortExplorer Shiny app has been created at '%s/CohortExplorer'.
+    sprintf("The CohortExplorer Shiny app has been created at '%s'.
                      Please view the README file in that folder for instructions
                      on how to run.", exportFolder)
   )
+  return(invisible(exportFolder))
 }

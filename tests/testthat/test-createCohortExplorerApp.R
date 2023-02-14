@@ -3,13 +3,6 @@ test_that("Extract person level data", {
 
   library(dplyr)
 
-  cohortTable <-
-    paste0(
-      "ct_",
-      gsub("[: -]", "", Sys.time(), perl = TRUE),
-      sample(1:100, 1)
-    )
-
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
 
@@ -33,7 +26,7 @@ test_that("Extract person level data", {
   outputDir <- tempfile()
 
   # database id has space
-  expect_error(
+  testthat::expect_error(
     createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
@@ -48,7 +41,7 @@ test_that("Extract person level data", {
   )
 
   # no connection or connectionDetails
-  expect_error(
+  testthat::expect_error(
     createCohortExplorerApp(
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -61,7 +54,7 @@ test_that("Extract person level data", {
     )
   )
   # cohort table has no subjects
-  expect_warning(
+  testthat::expect_warning(
     createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
@@ -75,8 +68,8 @@ test_that("Extract person level data", {
     )
   )
 
-  connection <-
-    DatabaseConnector::connect(connectionDetails = connectionDetails)
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
 
   # create a cohort table using databaseData data
   DatabaseConnector::renderTranslateExecuteSql(
@@ -111,8 +104,8 @@ test_that("Extract person level data", {
     exportFolder = outputDir
   )
 
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny")))
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data")))
+  testthat::expect_true(file.exists(file.path(outputDir)))
+  testthat::expect_true(file.exists(file.path(outputDir, "data")))
 
   createCohortExplorerApp(
     connection = connection,
@@ -129,7 +122,7 @@ test_that("Extract person level data", {
     shiftDates = TRUE
   )
 
-  createCohortExplorerApp(
+  outputPath <- createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -142,5 +135,11 @@ test_that("Extract person level data", {
     exportFolder = outputDir
   )
 
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data", "CohortExplorer_0_databaseData.RData")))
+  testthat::expect_true(file.exists(
+    file.path(
+      outputDir,
+      "data",
+      "CohortExplorer_0_databaseData.rds"
+    )
+  ))
 })

@@ -16,7 +16,7 @@ Warning
 
 - Contains person level data. This package is not to be considered de-identified.
 - Please do not share the output with others as it may violate protected health information.
-- .RData file in output contains PHI.
+- .RDS file in output contains PHI.
 
 Features
 ========
@@ -35,7 +35,7 @@ Screenshot
 How to use
 ==========
 
-- The output of createCohortExplorerApp is a Shiny App with person level data in .RData. It is in the output folder.
+- The output of createCohortExplorerApp is a Shiny App with person level data in .rds. It is in the output folder.
 - Go the output location in your file browser (e.g. windows file explorer in a Windows computer) and start 'CohortExplorer.Rproj'.
 - In R console now run renv::restore() to enable renv. This will download all required packages and dependencies and set up the run environment. 
 - Next call to shiny::runApp() 

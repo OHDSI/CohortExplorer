@@ -11,11 +11,11 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
   jdbcDriverFolder <- tempfile("jdbcDrivers")
   dir.create(jdbcDriverFolder, showWarnings = FALSE)
   DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-
+  
   if (!dbms %in% c("postgresql")) {
     DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
   }
-
+  
   withr::defer(
     {
       unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
@@ -81,9 +81,25 @@ if (cdmDatabaseSchema == "" || dbServer == "") {
   skipCdmTests <- TRUE
 }
 
+cohortTable <- paste0(
+  "ct_",
+  gsub("[: -]", "", Sys.time(), perl = TRUE),
+  sample(1:100, 1)
+)
 
 withr::defer(
   {
+    if (!skipCdmTests) {
+      # Clean up created cohort table:
+      connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = "DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;",
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable
+      )
+      DatabaseConnector::disconnect(connection)
+    }
   },
   testthat::teardown_env()
 )

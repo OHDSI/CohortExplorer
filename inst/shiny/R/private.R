@@ -12,11 +12,19 @@ readData <- function(databaseId,
                      cohortId) {
   if (file.exists(file.path(
     "data",
-    paste0("CohortExplorer_", cohortId, "_", databaseId, ".RData")
+    paste0("CohortExplorer_", cohortId, "_", databaseId, ".rds")
   ))) {
     return(readRDS(file = file.path(
       "data",
-      paste0("CohortExplorer_", cohortId, "_", databaseId, ".RData")
+      paste0("CohortExplorer_", cohortId, "_", databaseId, ".rds")
+    )))
+  } else if (file.exists(file.path(
+    "data",
+    paste0("CohortExplorer_", cohortId, "_", databaseId, ".RDS")
+  ))) {
+    return(readRDS(file = file.path(
+      "data",
+      paste0("CohortExplorer_", cohortId, "_", databaseId, ".RDS")
     )))
   } else {
     return(NULL)
