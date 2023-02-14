@@ -222,7 +222,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     abs(cohortDefinitionId),
     "_",
     databaseId,
-    ".RDS"
+    ".rds"
   )
 
   # Set up connection to server ----------------------------------------------------
