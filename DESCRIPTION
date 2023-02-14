@@ -24,7 +24,8 @@ Suggests:
   rmarkdown,
   testthat,
   knitr,
-  withr
+  withr,
+  SqlRender
 License: Apache License
 RoxygenNote: 7.2.3
 VignetteBuilder: knitr
