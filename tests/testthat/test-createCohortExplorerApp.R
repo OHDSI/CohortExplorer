@@ -33,7 +33,7 @@ test_that("Extract person level data", {
   outputDir <- tempfile()
 
   # database id has space
-  expect_error(
+  testthat::expect_error(
     createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
@@ -48,7 +48,7 @@ test_that("Extract person level data", {
   )
 
   # no connection or connectionDetails
-  expect_error(
+  testthat::expect_error(
     createCohortExplorerApp(
       cohortDatabaseSchema = cohortDatabaseSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -61,7 +61,7 @@ test_that("Extract person level data", {
     )
   )
   # cohort table has no subjects
-  expect_warning(
+  testthat::expect_warning(
     createCohortExplorerApp(
       connectionDetails = connectionDetails,
       cohortDatabaseSchema = cohortDatabaseSchema,
@@ -111,8 +111,8 @@ test_that("Extract person level data", {
     exportFolder = outputDir
   )
 
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny")))
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data")))
+  testthat::expect_true(file.exists(file.path(outputDir)))
+  testthat::expect_true(file.exists(file.path(outputDir, "data")))
 
   createCohortExplorerApp(
     connection = connection,
@@ -129,7 +129,7 @@ test_that("Extract person level data", {
     shiftDates = TRUE
   )
 
-  createCohortExplorerApp(
+  outputPath <- createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -142,5 +142,16 @@ test_that("Extract person level data", {
     exportFolder = outputDir
   )
 
-  testthat::expect_true(file.exists(file.path(outputDir, "CohortExplorerShiny", "data", "CohortExplorer_0_databaseData.rds")))
+  testthat::expect_true(file.exists(
+    file.path(
+      outputDir,
+      "data",
+      "CohortExplorer_0_databaseData.rds"
+    )
+  ))
+
+  testthat::expect_equal(
+    object = normalizePath(outputPath),
+    expected = normalizePath(outputDir)
+  )
 })

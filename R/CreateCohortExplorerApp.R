@@ -999,7 +999,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   }
 
   ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
-  
+
   dir.create(
     path = (file.path(
       exportFolder,
@@ -1025,5 +1025,5 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                      Please view the README file in that folder for instructions
                      on how to run.", exportFolder)
   )
-  return(invisible(appPath))
+  return(invisible(exportFolder))
 }
