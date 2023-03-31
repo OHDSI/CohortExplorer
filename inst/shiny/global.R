@@ -6,7 +6,7 @@ if (file.exists("R/Default.R")) {
   source("R/Default.R")
 }
 
-files <- list.files(path = file.path("data"), pattern = ".rds")
+files <- list.files(path = file.path("data"), pattern = ".RDS")
 if (length(files) == 0) {
   stop("No .rds found in data folder.")
 }
@@ -27,7 +27,7 @@ listOfFiles$newName <-
   )
 listOfFiles$newName <-
   gsub(
-    pattern = ".rds",
+    pattern = ".RDS",
     replacement = "",
     fixed = TRUE,
     x = listOfFiles$newName
