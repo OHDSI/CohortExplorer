@@ -6,7 +6,7 @@ if (file.exists("R/Default.R")) {
   source("R/Default.R")
 }
 
-files <- list.files(path = file.path("data"), pattern = ".RDS")
+files <- list.files(path = file.path("data"), pattern = ".rds", ignore.case = TRUE)
 if (length(files) == 0) {
   stop("No .rds found in data folder.")
 }
@@ -27,12 +27,11 @@ listOfFiles$newName <-
   )
 listOfFiles$newName <-
   gsub(
-    pattern = ".RDS",
+    pattern = ".rds",
     replacement = "",
     fixed = TRUE,
-    x = listOfFiles$newName
+    x = gsub(pattern = ".RDS", replacement = ".rds", x = listOfFiles$newName)
   )
-
 listOfFiles <- listOfFiles %>%
   tidyr::separate(
     col = newName,
