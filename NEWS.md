@@ -1,3 +1,13 @@
+CohortExplorer 0.0.12
+======================
+
+Minor bug fixes
+
+CohortExplorer 0.0.11
+======================
+
+Minor bug fixes
+
 CohortExplorer 0.0.10
 ======================
 
