@@ -202,11 +202,13 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   cohortTableIsTemp <- FALSE
   if (is.null(cohortDatabaseSchema)) {
-    if (grepl(pattern = "#", x = cohortTable, fixed = TRUE)) {
+    if (grepl(pattern = "#",
+              x = cohortTable,
+              fixed = TRUE)) {
       cohortTableIsTemp <- TRUE
+    } else {
+      stop("cohortDatabaseSchema is NULL, but cohortTable is not temporary.")
     }
-  } else {
-    stop("cohortDatabaseSchema is NULL, but cohortTable is not temporary.")
   }
 
   databaseId <- as.character(gsub(
