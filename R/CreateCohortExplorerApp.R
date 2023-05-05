@@ -295,7 +295,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       sample_size = sampleSize,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      cohort_table_is_temp = cohortTableIsTemp,
       cohort_definition_id = cohortDefinitionId,
       do_not_export_cohort_data = doNotExportCohortData
     )
