@@ -199,7 +199,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   checkmate::reportAssertions(collection = errorMessage)
 
   originalDatabaseId <- databaseId
-  
+
   cohortTableIsTemp <- FALSE
   if (is.null(cohortDatabaseSchema)) {
     if (grepl(pattern = "#", x = cohortTable, fixed = TRUE)) {
