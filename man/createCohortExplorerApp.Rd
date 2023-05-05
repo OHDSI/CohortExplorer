@@ -7,7 +7,7 @@
 createCohortExplorerApp(
   connectionDetails = NULL,
   connection = NULL,
-  cohortDatabaseSchema = "cohort",
+  cohortDatabaseSchema = NULL,
   cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),

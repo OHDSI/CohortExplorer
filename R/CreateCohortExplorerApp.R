@@ -75,7 +75,7 @@
 #' @export
 createCohortExplorerApp <- function(connectionDetails = NULL,
                                     connection = NULL,
-                                    cohortDatabaseSchema = "cohort",
+                                    cohortDatabaseSchema = NULL,
                                     cdmDatabaseSchema,
                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
                                     tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -112,7 +112,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   checkmate::assertCharacter(
     x = cohortDatabaseSchema,
-    min.len = 1,
+    min.len = 0,
+    max.len = 1,
+    null.ok = TRUE,
     add = errorMessage
   )
 
@@ -197,6 +199,15 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   checkmate::reportAssertions(collection = errorMessage)
 
   originalDatabaseId <- databaseId
+  
+  cohortTableIsTemp <- FALSE
+  if (is.null(cohortDatabaseSchema)) {
+    if (grepl(pattern = "#", x = cohortTable, fixed = TRUE)) {
+      cohortTableIsTemp <- TRUE
+    }
+  } else {
+    stop("cohortDatabaseSchema is NULL, but cohortTable is not temporary.")
+  }
 
   databaseId <- as.character(gsub(
     pattern = " ",
@@ -265,10 +276,10 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
               FROM (
                   	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
-                      	                            FROM @cohort_database_schema.@cohort_table
+                      	                            FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table
                       	                            WHERE cohort_definition_id = @cohort_definition_id} : {
                                                   	SELECT DISTINCT person_id
-                                                  	FROM @cohort_database_schema.@cohort_table
+                                                  	FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table
                                                   	}
               	) all_ids
             ) f
@@ -282,6 +293,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       sample_size = sampleSize,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
+      cohort_table_is_temp = cohortTableIsTemp,
       cohort_definition_id = cohortDefinitionId,
       do_not_export_cohort_data = doNotExportCohortData
     )
@@ -297,7 +309,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               	                              observation_period_start_date AS start_date,
               	                              observation_period_end_date AS end_date
               	                              }
-              FROM @cohort_database_schema.@cohort_table c
+              FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table c
               INNER JOIN #persons_filter p
               ON {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id} = p.person_id
               {!@do_not_export_cohort_data} ? {WHERE cohort_definition_id = @cohort_definition_id}
