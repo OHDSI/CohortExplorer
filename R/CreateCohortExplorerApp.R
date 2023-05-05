@@ -970,46 +970,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     sampleFound = nrow(subjects)
   )
 
-  filesToCopys <- dplyr::tibble(
-    fullPath = list.files(
-      path = system.file("shiny", package = utils::packageName()),
-      include.dirs = TRUE,
-      all.files = TRUE,
-      recursive = TRUE,
-      full.names = TRUE
-    )
-  )
-  filesToCopys$relativePath <-
-    gsub(
-      pattern = paste0(system.file("shiny", package = utils::packageName()), "/"),
-      replacement = "",
-      fixed = TRUE,
-      x = filesToCopys$fullPath
-    )
-
-  for (i in (1:nrow(filesToCopys))) {
-    dir.create(
-      path = dirname(
-        file.path(
-          exportFolder,
-          filesToCopys[i, ]$relativePath
-        )
-      ),
-      showWarnings = FALSE,
-      recursive = TRUE
-    )
-    file.copy(
-      from = filesToCopys[i, ]$fullPath,
-      to = dirname(
-        file.path(
-          exportFolder,
-          filesToCopys[i, ]$relativePath
-        )
-      ),
-      overwrite = TRUE,
-      recursive = TRUE
-    )
-  }
+  exportCohortExplorerAppFiles(exportFolder)
 
   ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
 
