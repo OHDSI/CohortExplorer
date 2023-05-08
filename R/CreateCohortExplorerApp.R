@@ -278,7 +278,35 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     sampleSize <- nrow(persons)
   } else {
     # take a random sample
-    sql <- "DROP TABLE IF EXISTS #persons_filter;
+    if (cohortTableIsTemp) {
+      sql <- "DROP TABLE IF EXISTS #persons_filter;
+            SELECT *
+            INTO #persons_filter
+            FROM
+            (
+              SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
+              FROM (
+                  	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
+                      	                            FROM @cohort_table
+                      	                            WHERE cohort_definition_id = @cohort_definition_id} : {
+                                                  	SELECT DISTINCT person_id
+                                                  	FROM @cohort_table
+                                                  	}
+              	) all_ids
+            ) f
+            WHERE new_id <= @sample_size;"
+      writeLines("Attempting to find random subjects.")
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        sample_size = sampleSize,
+        cohort_table = cohortTable,
+        cohort_definition_id = cohortDefinitionId,
+        do_not_export_cohort_data = doNotExportCohortData
+      )
+    } else {
+      sql <- "DROP TABLE IF EXISTS #persons_filter;
             SELECT *
             INTO #persons_filter
             FROM
@@ -294,18 +322,19 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               	) all_ids
             ) f
             WHERE new_id <= @sample_size;"
-
-    writeLines("Attempting to find random subjects.")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      sample_size = sampleSize,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      cohort_definition_id = cohortDefinitionId,
-      do_not_export_cohort_data = doNotExportCohortData
-    )
+      
+      writeLines("Attempting to find random subjects.")
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        sample_size = sampleSize,
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable,
+        cohort_definition_id = cohortDefinitionId,
+        do_not_export_cohort_data = doNotExportCohortData
+      )
+    }
   }
 
   writeLines("Getting cohort table.")
