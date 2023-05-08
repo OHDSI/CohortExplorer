@@ -304,18 +304,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       intersect(persons$personId, personIdsInDataSource)
   }
 
-  takeRandomSample <- function(x, size) {
-    if (length(x) <= 1) {
-      return(x |> as.double())
-    } else {
-      return(sample(
-        x = x,
-        size = size,
-        replace = FALSE
-      )) |> as.double()
-    }
-  }
-
   # take random sample
   personIdsInDataSourceSample <-
     dplyr::tibble(personId = takeRandomSample(
@@ -361,7 +349,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                 	  c.cohort_end_date AS end_date
               FROM @cohort_table c
               INNER JOIN #persons_filter p
-              ON c.person_id = p.person_id
+              ON c.subject_id = p.person_id
               WHERE c.cohort_definition_id = @cohort_definition_id
               ORDER BY c.subject_id, c.cohort_start_date;",
       cohort_table = cohortTable,
@@ -432,7 +420,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
         dplyr::rename("personId" = .data$subjectId),
       by = "personId"
     ) %>%
-    dplyr::mutate("age" = "yearOfCohort" - "yearOfBirth") %>%
+    dplyr::mutate("age" = .data$yearOfCohort - .data$yearOfBirth) %>%
     dplyr::select(-"yearOfCohort", -"yearOfBirth")
 
   writeLines("Getting observation period table.")
@@ -903,7 +891,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     dplyr::inner_join(conceptIds,
       by = c("genderConceptId" = "conceptId")
     ) %>%
-    dplyr::rename(gender = .data$conceptName) %>%
+    dplyr::rename(gender = conceptName) %>%
     dplyr::ungroup()
 
   personMinObservationPeriodDate <- observationPeriod %>%
@@ -913,46 +901,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       .groups = "keep"
     ) %>%
     dplyr::ungroup()
-
-  shiftDatesInData <- function(data,
-                               originDate = as.Date("2000-01-01"),
-                               minObservationPeriodDate = personMinObservationPeriodDate) {
-    data <- data %>%
-      dplyr::inner_join(personMinObservationPeriodDate,
-        by = "personId"
-      )
-
-    if ("startDate" %in% colnames(data)) {
-      data <- data %>%
-        dplyr::mutate(startDate = clock::add_days(
-          x = as.Date(originDate),
-          n = as.integer(
-            difftime(
-              time1 = .data$startDate,
-              time2 = .data$minObservationPeriodDate,
-              units = "days"
-            )
-          )
-        ))
-    }
-
-    if ("endDate" %in% colnames(data)) {
-      data <- data %>%
-        dplyr::mutate(endDate = clock::add_days(
-          x = as.Date(originDate),
-          n = as.integer(
-            difftime(
-              time1 = .data$endDate,
-              time2 = .data$minObservationPeriodDate,
-              units = "days"
-            )
-          )
-        ))
-    }
-
-    data <- data %>%
-      dplyr::select(-minObservationPeriodDate)
-  }
 
   if (shiftDates) {
     observationPeriod <- shiftDatesInData(data = observationPeriod)
@@ -971,18 +919,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     )
     visitOccurrence <- shiftDatesInData(data = visitOccurrence)
     measurement <- shiftDatesInData(data = measurement)
-  }
-
-  replaceId <- function(data, useNewId = TRUE) {
-    if (useNewId) {
-      data <- data %>%
-        dplyr::select(-"personId") %>%
-        dplyr::rename("personId" = .data$newId)
-    } else {
-      data <- data %>%
-        dplyr::select(-"newId")
-    }
-    return(data)
   }
 
   cohort <- replaceId(data = cohort, useNewId = assignNewId)
