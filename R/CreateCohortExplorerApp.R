@@ -417,7 +417,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
           .groups = "keep"
         ) %>%
         dplyr::ungroup() %>%
-        dplyr::rename("personId" = .data$subjectId),
+        dplyr::rename("personId" = subjectId),
       by = "personId"
     ) %>%
     dplyr::mutate("age" = .data$yearOfCohort - .data$yearOfBirth) %>%
@@ -880,7 +880,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   )
 
   cohort <- cohort %>%
-    dplyr::rename(personId = .data$subjectId)
+    dplyr::rename("personId" = subjectId)
 
   subjects <- cohort %>%
     dplyr::group_by(.data$personId) %>%
@@ -891,7 +891,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     dplyr::inner_join(conceptIds,
       by = c("genderConceptId" = "conceptId")
     ) %>%
-    dplyr::rename(gender = conceptName) %>%
+    dplyr::rename("gender" = conceptName) %>%
     dplyr::ungroup()
 
   personMinObservationPeriodDate <- observationPeriod %>%
@@ -902,6 +902,47 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     ) %>%
     dplyr::ungroup()
 
+  
+  shiftDatesInData <- function(data,
+                               originDate = as.Date("2000-01-01"),
+                               minObservationPeriodDate = personMinObservationPeriodDate) {
+    data <- data %>%
+      dplyr::inner_join(personMinObservationPeriodDate,
+                        by = "personId"
+      )
+    
+    if ("startDate" %in% colnames(data)) {
+      data <- data %>%
+        dplyr::mutate(startDate = clock::add_days(
+          x = as.Date(originDate),
+          n = as.integer(
+            difftime(
+              time1 = .data$startDate,
+              time2 = .data$minObservationPeriodDate,
+              units = "days"
+            )
+          )
+        ))
+    }
+    
+    if ("endDate" %in% colnames(data)) {
+      data <- data %>%
+        dplyr::mutate(endDate = clock::add_days(
+          x = as.Date(originDate),
+          n = as.integer(
+            difftime(
+              time1 = .data$endDate,
+              time2 = .data$minObservationPeriodDate,
+              units = "days"
+            )
+          )
+        ))
+    }
+    
+    data <- data %>%
+      dplyr::select(-minObservationPeriodDate)
+  }
+  
   if (shiftDates) {
     observationPeriod <- shiftDatesInData(data = observationPeriod)
     cohort <- shiftDatesInData(data = cohort)
