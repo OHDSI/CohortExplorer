@@ -75,7 +75,7 @@
 #' @export
 createCohortExplorerApp <- function(connectionDetails = NULL,
                                     connection = NULL,
-                                    cohortDatabaseSchema = "cohort",
+                                    cohortDatabaseSchema = NULL,
                                     cdmDatabaseSchema,
                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
                                     tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -112,7 +112,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   checkmate::assertCharacter(
     x = cohortDatabaseSchema,
-    min.len = 1,
+    min.len = 0,
+    max.len = 1,
+    null.ok = TRUE,
     add = errorMessage
   )
 
@@ -195,8 +197,27 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   )
 
   checkmate::reportAssertions(collection = errorMessage)
+  
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
+  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  on.exit(
+    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    add = TRUE
+  )
 
   originalDatabaseId <- databaseId
+
+  cohortTableIsTemp <- FALSE
+  if (is.null(cohortDatabaseSchema)) {
+    if (grepl(pattern = "#",
+              x = cohortTable,
+              fixed = TRUE)) {
+      cohortTableIsTemp <- TRUE
+    } else {
+      stop("cohortDatabaseSchema is NULL, but cohortTable is not temporary.")
+    }
+  }
 
   databaseId <- as.character(gsub(
     pattern = " ",
@@ -265,10 +286,10 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
               FROM (
                   	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
-                      	                            FROM @cohort_database_schema.@cohort_table
+                      	                            FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table
                       	                            WHERE cohort_definition_id = @cohort_definition_id} : {
                                                   	SELECT DISTINCT person_id
-                                                  	FROM @cohort_database_schema.@cohort_table
+                                                  	FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table
                                                   	}
               	) all_ids
             ) f
@@ -297,7 +318,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               	                              observation_period_start_date AS start_date,
               	                              observation_period_end_date AS end_date
               	                              }
-              FROM @cohort_database_schema.@cohort_table c
+              FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table c
               INNER JOIN #persons_filter p
               ON {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id} = p.person_id
               {!@do_not_export_cohort_data} ? {WHERE cohort_definition_id = @cohort_definition_id}
@@ -957,46 +978,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     sampleFound = nrow(subjects)
   )
 
-  filesToCopys <- dplyr::tibble(
-    fullPath = list.files(
-      path = system.file("shiny", package = utils::packageName()),
-      include.dirs = TRUE,
-      all.files = TRUE,
-      recursive = TRUE,
-      full.names = TRUE
-    )
-  )
-  filesToCopys$relativePath <-
-    gsub(
-      pattern = paste0(system.file("shiny", package = utils::packageName()), "/"),
-      replacement = "",
-      fixed = TRUE,
-      x = filesToCopys$fullPath
-    )
-
-  for (i in (1:nrow(filesToCopys))) {
-    dir.create(
-      path = dirname(
-        file.path(
-          exportFolder,
-          filesToCopys[i, ]$relativePath
-        )
-      ),
-      showWarnings = FALSE,
-      recursive = TRUE
-    )
-    file.copy(
-      from = filesToCopys[i, ]$fullPath,
-      to = dirname(
-        file.path(
-          exportFolder,
-          filesToCopys[i, ]$relativePath
-        )
-      ),
-      overwrite = TRUE,
-      recursive = TRUE
-    )
-  }
+  exportCohortExplorerAppFiles(exportFolder)
 
   ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
 
