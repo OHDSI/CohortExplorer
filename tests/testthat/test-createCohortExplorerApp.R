@@ -108,23 +108,21 @@ test_that("Extract person level data", {
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
   
-  testthat::expect_warning(
-    createCohortExplorerApp(
-      connection = connection,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortDefinitionId = c(1),
-      sampleSize = 100,
-      personIds = c(0),
-      databaseId = "databaseData",
-      exportFolder = outputDir,
-      assignNewId = TRUE,
-      shiftDates = TRUE
-    )
+  createCohortExplorerApp(
+    connection = connection,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortDefinitionId = c(1),
+    sampleSize = 100,
+    personIds = c(10, 11),
+    databaseId = "databaseData",
+    exportFolder = outputDir,
+    assignNewId = TRUE,
+    shiftDates = TRUE
   )
-  
+ 
   outputPath <- createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
