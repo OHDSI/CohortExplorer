@@ -90,9 +90,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                                     shiftDates = FALSE,
                                     assignNewId = FALSE) {
   startTime <- Sys.time()
-
+  
   errorMessage <- checkmate::makeAssertCollection()
-
+  
   checkmate::assertLogical(
     x = doNotExportCohortData,
     any.missing = FALSE,
@@ -102,14 +102,14 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
-
+  
   if (doNotExportCohortData) {
     cohortDatabaseSchema <- cdmDatabaseSchema
     cohortDefinitionId <- 0
     cohortName <- "Observation Period"
     cohortTable <- "observation_period"
   }
-
+  
   checkmate::assertCharacter(
     x = cohortDatabaseSchema,
     min.len = 0,
@@ -117,46 +117,40 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     null.ok = TRUE,
     add = errorMessage
   )
-
-  checkmate::assertCharacter(
-    x = cdmDatabaseSchema,
-    min.len = 1,
-    add = errorMessage
-  )
-
-  checkmate::assertCharacter(
-    x = vocabularyDatabaseSchema,
-    min.len = 1,
-    add = errorMessage
-  )
-
-  checkmate::assertCharacter(
-    x = cohortTable,
-    min.len = 1,
-    add = errorMessage
-  )
-
+  
+  checkmate::assertCharacter(x = cdmDatabaseSchema,
+                             min.len = 1,
+                             add = errorMessage)
+  
+  checkmate::assertCharacter(x = vocabularyDatabaseSchema,
+                             min.len = 1,
+                             add = errorMessage)
+  
+  checkmate::assertCharacter(x = cohortTable,
+                             min.len = 1,
+                             add = errorMessage)
+  
   checkmate::assertCharacter(
     x = databaseId,
     min.len = 1,
     max.len = 1,
     add = errorMessage
   )
-
+  
   checkmate::assertCharacter(
     x = tempEmulationSchema,
     min.len = 1,
     null.ok = TRUE,
     add = errorMessage
   )
-
+  
   checkmate::assertIntegerish(
     x = cohortDefinitionId,
     lower = 0,
     len = 1,
     add = errorMessage
   )
-
+  
   checkmate::assertIntegerish(
     x = sampleSize,
     lower = 0,
@@ -164,7 +158,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     null.ok = TRUE,
     add = errorMessage
   )
-
+  
   if (is.null(personIds)) {
     checkmate::assertIntegerish(
       x = sampleSize,
@@ -181,21 +175,17 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       null.ok = TRUE
     )
   }
-
+  
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
-
-  dir.create(
-    path = exportFolder,
-    showWarnings = FALSE,
-    recursive = TRUE
-  )
-
-  checkmate::assertDirectory(
-    x = exportFolder,
-    access = "x",
-    add = errorMessage
-  )
-
+  
+  dir.create(path = exportFolder,
+             showWarnings = FALSE,
+             recursive = TRUE)
+  
+  checkmate::assertDirectory(x = exportFolder,
+                             access = "x",
+                             add = errorMessage)
+  
   checkmate::reportAssertions(collection = errorMessage)
   
   ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
@@ -205,9 +195,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
     add = TRUE
   )
-
+  
   originalDatabaseId <- databaseId
-
+  
   cohortTableIsTemp <- FALSE
   if (is.null(cohortDatabaseSchema)) {
     if (grepl(pattern = "#",
@@ -218,34 +208,26 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       stop("cohortDatabaseSchema is NULL, but cohortTable is not temporary.")
     }
   }
-
+  
   databaseId <- as.character(gsub(
     pattern = " ",
     replacement = "",
     x = databaseId
   ))
-
-  databaseId <- as.character(gsub(
-    pattern = "_",
-    replacement = "",
-    x = databaseId
-  ))
-
+  
   if (nchar(databaseId) < nchar(originalDatabaseId)) {
     stop(paste0(
       "databaseId should not have space or underscore: ",
       originalDatabaseId
     ))
   }
-
-  rdsFileName <- paste0(
-    "CohortExplorer_",
-    abs(cohortDefinitionId),
-    "_",
-    databaseId,
-    ".rds"
-  )
-
+  
+  rdsFileName <- paste0("CohortExplorer_",
+                        abs(cohortDefinitionId),
+                        "_",
+                        databaseId,
+                        ".rds")
+  
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -255,118 +237,144 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       stop("No connection or connectionDetails provided.")
     }
   }
-
+  
+  if (cohortTableIsTemp) {
+    personIdsInDataSource <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT DISTINCT subject_id
+               FROM @cohort_table
+               WHERE cohort_definition_id = @cohort_definition_id;",
+        cohort_table = cohortTable,
+        tempEmulationSchema = tempEmulationSchema,
+        cohort_definition_id = cohortDefinitionId,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      dplyr::pull(subjectId)
+  } else {
+    if (doNotExportCohortData) {
+      personIdsInDataSource <-
+        DatabaseConnector::renderTranslateQuerySql(
+          connection = connection,
+          sql = "SELECT DISTINCT person_id
+               FROM @cdm_database_schema.observation_period;",
+          cdm_database_schema = cdmDatabaseSchema,
+          snakeCaseToCamelCase = TRUE
+        ) %>%
+        dplyr::pull(personId)
+    } else {
+      personIdsInDataSource <-
+        DatabaseConnector::renderTranslateQuerySql(
+          connection = connection,
+          sql = "SELECT DISTINCT subject_id
+                 FROM @cohort_database_schema.@cohort_table
+                 WHERE cohort_definition_id = @cohort_definition_id;",
+          cohort_table = cohortTable,
+          cohort_database_schema = cohortDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohort_definition_id = cohortDefinitionId,
+          snakeCaseToCamelCase = TRUE
+        ) %>%
+        dplyr::pull(subjectId)
+    }
+  }
+  
   if (!is.null(personIds)) {
     persons <- dplyr::tibble(personId = personIds) %>%
       dplyr::mutate(randomNumber = runif(n = 1)) %>%
       dplyr::arrange(.data$randomNumber) %>%
       dplyr::mutate(newId = dplyr::row_number()) %>%
       dplyr::select(-.data$randomNumber)
-
-    DatabaseConnector::insertTable(
-      connection = connection,
-      tableName = "#persons_filter",
-      createTable = TRUE,
-      dropTableIfExists = TRUE,
-      tempTable = TRUE,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = TRUE,
-      bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
-      camelCaseToSnakeCase = TRUE,
-      data = persons
-    )
-    sampleSize <- nrow(persons)
-  } else {
-    # take a random sample
-    if (cohortTableIsTemp) {
-      sql <- "DROP TABLE IF EXISTS #persons_filter;
-            SELECT *
-            INTO #persons_filter
-            FROM
-            (
-              SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
-              FROM (
-                  	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
-                      	                            FROM @cohort_table
-                      	                            WHERE cohort_definition_id = @cohort_definition_id} : {
-                                                  	SELECT DISTINCT person_id
-                                                  	FROM @cohort_table
-                                                  	}
-              	) all_ids
-            ) f
-            WHERE new_id <= @sample_size;"
-      writeLines("Attempting to find random subjects.")
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = sql,
-        tempEmulationSchema = tempEmulationSchema,
-        sample_size = sampleSize,
-        cohort_table = cohortTable,
-        cohort_definition_id = cohortDefinitionId,
-        do_not_export_cohort_data = doNotExportCohortData
-      )
-    } else {
-      sql <- "DROP TABLE IF EXISTS #persons_filter;
-            SELECT *
-            INTO #persons_filter
-            FROM
-            (
-              SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
-              FROM (
-                  	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
-                      	                            FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table
-                      	                            WHERE cohort_definition_id = @cohort_definition_id} : {
-                                                  	SELECT DISTINCT person_id
-                                                  	FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table
-                                                  	}
-              	) all_ids
-            ) f
-            WHERE new_id <= @sample_size;"
-      
-      writeLines("Attempting to find random subjects.")
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = sql,
-        tempEmulationSchema = tempEmulationSchema,
-        sample_size = sampleSize,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_definition_id = cohortDefinitionId,
-        do_not_export_cohort_data = doNotExportCohortData
-      )
-    }
+    
+    personIdsInDataSource <-
+      intersect(persons$personId, personIdsInDataSource)
   }
-
-  writeLines("Getting cohort table.")
-  cohort <- DatabaseConnector::renderTranslateQuerySql(
+  
+  # take random sample
+  personIdsInDataSourceSample <-
+    dplyr::tibble(personId = sample(x = personIdsInDataSource,
+                                    size = min(length(personIdsInDataSource), sampleSize),
+                                    replace = FALSE) |> as.double())
+  
+  DatabaseConnector::insertTable(
     connection = connection,
-    sql = "SELECT {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id subject_id},
+    tableName = "#persons_filter_no_id",
+    createTable = TRUE,
+    dropTableIfExists = TRUE,
+    tempTable = TRUE,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = TRUE,
+    bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
+    camelCaseToSnakeCase = TRUE,
+    data = personIdsInDataSourceSample
+  )
+  
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = "DROP TABLE IF EXISTS #persons_filter;
+              SELECT *
+              INTO #persons_filter
+              FROM
+              (
+                SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
+                FROM #persons_filter_no_id
+              ) f;",
+    tempEmulationSchema = tempEmulationSchema
+  )
+  
+  
+  if (cohortTableIsTemp) {
+    writeLines("Getting cohort table.")
+    cohort <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT c.subject_id,
+                    p.new_id,
+                    c.cohort_start_date AS start_date,
+                	  c.cohort_end_date AS end_date
+              FROM @cohort_table c
+              INNER JOIN #persons_filter p
+              ON c.person_id = p.person_id
+              WHERE c.cohort_definition_id = @cohort_definition_id
+              ORDER BY c.subject_id, c.cohort_start_date;",
+      cohort_table = cohortTable,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_definition_id = cohortDefinitionId,
+      do_not_export_cohort_data = doNotExportCohortData,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+      dplyr::tibble()
+  } else {
+    writeLines("Getting cohort table.")
+    cohort <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id subject_id},
                   p.new_id,
                   {!@do_not_export_cohort_data} ? {cohort_start_date AS start_date,
               	                              cohort_end_date AS end_date} : {
               	                              observation_period_start_date AS start_date,
               	                              observation_period_end_date AS end_date
               	                              }
-              FROM {@cohort_database_schema != ''}?{@cohort_database_schema.}@cohort_table c
+              FROM @cohort_database_schema.@cohort_table c
               INNER JOIN #persons_filter p
               ON {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id} = p.person_id
               {!@do_not_export_cohort_data} ? {WHERE cohort_definition_id = @cohort_definition_id}
           ORDER BY {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id},
                     {!@do_not_export_cohort_data} ? {cohort_start_date} : {observation_period_start_date};",
-    cohort_database_schema = cohortDatabaseSchema,
-    cohort_table = cohortTable,
-    tempEmulationSchema = tempEmulationSchema,
-    cohort_definition_id = cohortDefinitionId,
-    do_not_export_cohort_data = doNotExportCohortData,
-    snakeCaseToCamelCase = TRUE
-  ) %>%
-    dplyr::tibble()
-
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_definition_id = cohortDefinitionId,
+      do_not_export_cohort_data = doNotExportCohortData,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+      dplyr::tibble()
+  }
+  
   if (nrow(cohort) == 0) {
     warning("Cohort does not have the selected subject ids. No shiny app created.")
     return(NULL)
   }
-
+  
   writeLines("Getting person table.")
   person <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -383,7 +391,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   person <- person %>%
     dplyr::inner_join(
       cohort %>%
@@ -397,8 +405,8 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       by = "personId"
     ) %>%
     dplyr::mutate(age = .data$yearOfCohort - .data$yearOfBirth) %>%
-    dplyr::select(-"yearOfCohort", -"yearOfBirth")
-
+    dplyr::select(-"yearOfCohort",-"yearOfBirth")
+  
   writeLines("Getting observation period table.")
   observationPeriod <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -419,7 +427,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   writeLines("Getting visit occurrence table.")
   visitOccurrence <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -453,7 +461,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   writeLines("Getting condition occurrence table.")
   conditionOccurrence <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -487,7 +495,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   writeLines("Getting condition era table.")
   conditionEra <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -516,7 +524,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   ) %>%
     dplyr::tibble() %>%
     dplyr::mutate(typeConceptId = 0, records = 1)
-
+  
   writeLines("Getting observation table.")
   observation <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -546,7 +554,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   writeLines("Getting procedure occurrence table.")
   procedureOccurrence <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -578,7 +586,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   ) %>%
     dplyr::tibble() %>%
     dplyr::mutate(endDate = .data$startDate)
-
+  
   writeLines("Getting drug exposure table.")
   drugExposure <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -612,7 +620,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   writeLines("Getting drug era table.")
   drugEra <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -641,7 +649,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   ) %>%
     dplyr::tibble() %>%
     dplyr::mutate(typeConceptId = 0)
-
+  
   writeLines("Getting measurement table.")
   measurement <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -673,8 +681,8 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   ) %>%
     dplyr::tibble() %>%
     dplyr::mutate(endDate = .data$startDate)
-
-
+  
+  
   writeLines("Getting concept id.")
   conceptIds <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -848,95 +856,82 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "DROP TABLE IF EXISTS #persons_filter;",
     tempEmulationSchema = tempEmulationSchema
   )
-
+  
   cohort <- cohort %>%
     dplyr::rename(personId = .data$subjectId)
-
+  
   subjects <- cohort %>%
     dplyr::group_by(.data$personId) %>%
     dplyr::summarise(startDate = min(.data$startDate)) %>%
     dplyr::inner_join(person,
-      by = "personId"
-    ) %>%
+                      by = "personId") %>%
     dplyr::inner_join(conceptIds,
-      by = c("genderConceptId" = "conceptId")
-    ) %>%
+                      by = c("genderConceptId" = "conceptId")) %>%
     dplyr::rename(gender = .data$conceptName) %>%
     dplyr::ungroup()
-
+  
   personMinObservationPeriodDate <- observationPeriod %>%
     dplyr::group_by(.data$personId) %>%
-    dplyr::summarise(
-      minObservationPeriodDate = min(.data$startDate),
-      .groups = "keep"
-    ) %>%
+    dplyr::summarise(minObservationPeriodDate = min(.data$startDate),
+                     .groups = "keep") %>%
     dplyr::ungroup()
-
+  
   shiftDatesInData <- function(data,
                                originDate = as.Date("2000-01-01"),
                                minObservationPeriodDate = personMinObservationPeriodDate) {
     data <- data %>%
       dplyr::inner_join(personMinObservationPeriodDate,
-        by = "personId"
-      )
-
+                        by = "personId")
+    
     if ("startDate" %in% colnames(data)) {
       data <- data %>%
-        dplyr::mutate(startDate = clock::add_days(
-          x = as.Date(originDate),
-          n = as.integer(
-            difftime(
-              time1 = .data$startDate,
-              time2 = .data$minObservationPeriodDate,
-              units = "days"
-            )
-          )
-        ))
+        dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
+                                                  n = as.integer(
+                                                    difftime(
+                                                      time1 = .data$startDate,
+                                                      time2 = .data$minObservationPeriodDate,
+                                                      units = "days"
+                                                    )
+                                                  )))
     }
-
+    
     if ("endDate" %in% colnames(data)) {
       data <- data %>%
-        dplyr::mutate(endDate = clock::add_days(
-          x = as.Date(originDate),
-          n = as.integer(
-            difftime(
-              time1 = .data$endDate,
-              time2 = .data$minObservationPeriodDate,
-              units = "days"
-            )
-          )
-        ))
+        dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
+                                                n = as.integer(
+                                                  difftime(
+                                                    time1 = .data$endDate,
+                                                    time2 = .data$minObservationPeriodDate,
+                                                    units = "days"
+                                                  )
+                                                )))
     }
-
+    
     data <- data %>%
       dplyr::select(-minObservationPeriodDate)
   }
-
+  
   if (shiftDates) {
     observationPeriod <- shiftDatesInData(data = observationPeriod)
     cohort <- shiftDatesInData(data = cohort)
     conditionEra <- shiftDatesInData(data = conditionEra)
-    conditionOccurrence <- shiftDatesInData(
-      data =
-        conditionOccurrence
-    )
+    conditionOccurrence <- shiftDatesInData(data =
+                                              conditionOccurrence)
     drugExposure <- shiftDatesInData(data = drugExposure)
     measurement <- shiftDatesInData(data = measurement)
     observation <- shiftDatesInData(data = observation)
-    procedureOccurrence <- shiftDatesInData(
-      data =
-        procedureOccurrence
-    )
+    procedureOccurrence <- shiftDatesInData(data =
+                                              procedureOccurrence)
     visitOccurrence <- shiftDatesInData(data = visitOccurrence)
     measurement <- shiftDatesInData(data = measurement)
   }
-
+  
   replaceId <- function(data, useNewId = TRUE) {
     if (useNewId) {
       data <- data %>%
@@ -948,44 +943,28 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     }
     return(data)
   }
-
+  
   cohort <- replaceId(data = cohort, useNewId = assignNewId)
   person <- replaceId(data = person, useNewId = assignNewId)
   subjects <- replaceId(data = subjects, useNewId = assignNewId)
-  observationPeriod <- replaceId(
-    data = observationPeriod,
-    useNewId = assignNewId
-  )
-  visitOccurrence <- replaceId(
-    data = visitOccurrence,
-    useNewId = assignNewId
-  )
-  conditionOccurrence <- replaceId(
-    data = conditionOccurrence,
-    useNewId = assignNewId
-  )
-  conditionEra <- replaceId(
-    data = conditionEra,
-    useNewId = assignNewId
-  )
-  observation <- replaceId(
-    data = observation,
-    useNewId = assignNewId
-  )
-  procedureOccurrence <- replaceId(
-    data = procedureOccurrence,
-    useNewId = assignNewId
-  )
-  drugExposure <- replaceId(
-    data = drugExposure,
-    useNewId = assignNewId
-  )
+  observationPeriod <- replaceId(data = observationPeriod,
+                                 useNewId = assignNewId)
+  visitOccurrence <- replaceId(data = visitOccurrence,
+                               useNewId = assignNewId)
+  conditionOccurrence <- replaceId(data = conditionOccurrence,
+                                   useNewId = assignNewId)
+  conditionEra <- replaceId(data = conditionEra,
+                            useNewId = assignNewId)
+  observation <- replaceId(data = observation,
+                           useNewId = assignNewId)
+  procedureOccurrence <- replaceId(data = procedureOccurrence,
+                                   useNewId = assignNewId)
+  drugExposure <- replaceId(data = drugExposure,
+                            useNewId = assignNewId)
   drugEra <- replaceId(data = drugEra, useNewId = assignNewId)
-  measurement <- replaceId(
-    data = measurement,
-    useNewId = assignNewId
-  )
-
+  measurement <- replaceId(data = measurement,
+                           useNewId = assignNewId)
+  
   results <- list(
     cohort = cohort,
     person = person,
@@ -1006,35 +985,32 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     sampleSize = sampleSize,
     sampleFound = nrow(subjects)
   )
-
+  
   exportCohortExplorerAppFiles(exportFolder)
-
+  
   ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
-
+  
   dir.create(
-    path = (file.path(
-      exportFolder,
-      "data"
-    )),
+    path = (file.path(exportFolder,
+                      "data")),
     showWarnings = FALSE,
     recursive = TRUE
   )
-  saveRDS(
-    object = results,
-    file = file.path(exportFolder, "data", rdsFileName)
-  )
-
+  saveRDS(object = results,
+          file = file.path(exportFolder, "data", rdsFileName))
+  
   delta <- Sys.time() - startTime
-  ParallelLogger::logInfo(
-    " - Extracting person level data took ",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
+  ParallelLogger::logInfo(" - Extracting person level data took ",
+                          signif(delta, 3),
+                          " ",
+                          attr(delta, "units"))
   message(
-    sprintf("The CohortExplorer Shiny app has been created at '%s'.
+    sprintf(
+      "The CohortExplorer Shiny app has been created at '%s'.
                      Please view the README file in that folder for instructions
-                     on how to run.", exportFolder)
+                     on how to run.",
+      exportFolder
+    )
   )
   return(invisible(exportFolder))
 }
