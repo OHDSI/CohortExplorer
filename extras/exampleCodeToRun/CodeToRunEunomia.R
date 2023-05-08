@@ -5,6 +5,10 @@ library(magrittr)
 
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 
+cdmDatabaseSchema <- 'main'
+cohortDatabaseSchema <- 'main'
+databaseId <- 'eunomia'
+
 cohortDefinitionSet <-
   CohortGenerator::getCohortDefinitionSet(
     settingsFileName = "settings/CohortsToCreate.csv",
@@ -33,35 +37,34 @@ dir.create(path = outputFolder,
 ## Create cohort tables on remote ----
 CohortGenerator::createCohortTables(
   connectionDetails = connectionDetails,
-  cohortDatabaseSchema = 'main',
+  cohortDatabaseSchema = cohortDatabaseSchema,
   cohortTableNames = cohortTableNames,
   incremental = TRUE
 )
 ## Generate cohort on remote ----
 CohortGenerator::generateCohortSet(
   connectionDetails = connectionDetails,
-  cdmDatabaseSchema = 'main',
+  cdmDatabaseSchema = cdmDatabaseSchema,
   cohortTableNames = cohortTableNames,
   cohortDefinitionSet = cohortDefinitionSet,
-  cohortDatabaseSchema = 'main',
+  cohortDatabaseSchema = cohortDatabaseSchema,
   incremental = TRUE,
   incrementalFolder = file.path(outputFolder, "incremental")
 )
-
 
 # EXECUTE --------------------------------------------------------------------
 tryCatch(
   expr = {
     CohortExplorer::createCohortExplorerApp(
       connectionDetails = connectionDetails,
-      cohortDatabaseSchema = 'main',
-      cdmDatabaseSchema = 'main',
-      vocabularyDatabaseSchema = 'main',
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = cdmDatabaseSchema,
       cohortTable = cohortTableNames$cohortTable,
       cohortDefinitionId = cohortDefinitionSet[1,]$cohortId,
       cohortName = cohortDefinitionSet[1,]$cohortName,
       exportFolder = file.path(outputFolder, "not_temp"),
-      databaseId = 'eunomia',
+      databaseId = databaseId,
       shiftDate = TRUE
     )
   },

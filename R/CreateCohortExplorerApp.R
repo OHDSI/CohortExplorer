@@ -290,11 +290,24 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       intersect(persons$personId, personIdsInDataSource)
   }
   
+  takeRandomSample <- function(x, size) {
+    if (length(x) <= 1) {
+      return(x |> as.double())
+    } else {
+      return(sample(
+        x = x,
+        size = size,
+        replace = FALSE
+      )) |> as.double()
+    }
+  }
+  
   # take random sample
   personIdsInDataSourceSample <-
-    dplyr::tibble(personId = sample(x = personIdsInDataSource,
-                                    size = min(length(personIdsInDataSource), sampleSize),
-                                    replace = FALSE) |> as.double())
+    dplyr::tibble(personId = takeRandomSample(x = personIdsInDataSource,
+                                              size = min(
+                                                length(personIdsInDataSource), sampleSize
+                                              )))
   
   DatabaseConnector::insertTable(
     connection = connection,
