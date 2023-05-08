@@ -53,7 +53,7 @@ test_that("Extract person level data", {
       exportFolder = outputDir
     )
   )
-  
+
   # cohort table has no subjects
   testthat::expect_warning(
     createCohortExplorerApp(
@@ -107,7 +107,7 @@ test_that("Extract person level data", {
 
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
-  
+
   createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -122,7 +122,7 @@ test_that("Extract person level data", {
     assignNewId = TRUE,
     shiftDates = TRUE
   )
- 
+
   outputPath <- createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,

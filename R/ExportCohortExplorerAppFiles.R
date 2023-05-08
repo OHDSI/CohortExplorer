@@ -27,7 +27,6 @@
 #' exportCohortExplorerAppFiles(
 #'   exportFolder = "output"
 #' )
-#'
 #' }
 #'
 #' @export
@@ -48,30 +47,32 @@ exportCohortExplorerAppFiles <- function(exportFolder) {
       fixed = TRUE,
       x = filesToCopys$fullPath
     )
-  
+
   for (i in (1:nrow(filesToCopys))) {
     dir.create(
       path = dirname(file.path(
         exportFolder,
-        filesToCopys[i,]$relativePath
+        filesToCopys[i, ]$relativePath
       )),
       showWarnings = FALSE,
       recursive = TRUE
     )
     file.copy(
-      from = filesToCopys[i,]$fullPath,
+      from = filesToCopys[i, ]$fullPath,
       to = dirname(file.path(
         exportFolder,
-        filesToCopys[i,]$relativePath
+        filesToCopys[i, ]$relativePath
       )),
       overwrite = TRUE,
       recursive = TRUE
     )
   }
-  
+
   dir.create(
-    path = (file.path(exportFolder,
-                      "data")),
+    path = (file.path(
+      exportFolder,
+      "data"
+    )),
     showWarnings = FALSE,
     recursive = TRUE
   )

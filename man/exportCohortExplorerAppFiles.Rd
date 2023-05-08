@@ -18,7 +18,6 @@ Copy shiny app files.
 exportCohortExplorerAppFiles(
   exportFolder = "output"
 )
-
 }
 
 }
