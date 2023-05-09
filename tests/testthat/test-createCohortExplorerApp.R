@@ -54,12 +54,6 @@ test_that("Create app with cohort data in temp table", {
   )
   
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
-  
-  DatabaseConnector::disconnect(connection)
-  
-  unlink(x = outputDir,
-         recursive = TRUE,
-         force = TRUE)
 })
 
 
@@ -158,7 +152,7 @@ test_that("Cohort has no data", {
 })
 
 
-test_that("Create app with random sample of 100 subjects in cohort", {
+test_that("create rand 100 in cohort", {
   skip_if(skipCdmTests, "cdm settings not configured")
   
   library(dplyr)
@@ -218,18 +212,11 @@ test_that("Create app with random sample of 100 subjects in cohort", {
   
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
-  
-  DatabaseConnector::disconnect(connection)
-  
-  unlink(x = outputDir,
-         recursive = TRUE,
-         force = TRUE)
-  
 })
 
 
 
-test_that("Create app with random sample of 100 subjects in cohort with date shifting", {
+test_that("create rand 100 in cohort with date shifting", {
   skip_if(skipCdmTests, "cdm settings not configured")
   
   library(dplyr)
@@ -293,15 +280,10 @@ test_that("Create app with random sample of 100 subjects in cohort with date shi
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
   
-  DatabaseConnector::disconnect(connection)
-  
-  unlink(x = outputDir,
-         recursive = TRUE,
-         force = TRUE)
   
 })
 
-  
+
 test_that("do Not Export CohortData", {
   skip_if(skipCdmTests, "cdm settings not configured")
   
@@ -323,7 +305,7 @@ test_that("do Not Export CohortData", {
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable
   )
-  
+  outputDir <- tempfile()
   outputPath <- createCohortExplorerApp(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -340,10 +322,4 @@ test_that("do Not Export CohortData", {
               "data",
               "CohortExplorer_0_databaseData.rds")
   ))
-  
-  DatabaseConnector::disconnect(connection)
-  
-  unlink(x = outputDir,
-         recursive = TRUE,
-         force = TRUE)
 })

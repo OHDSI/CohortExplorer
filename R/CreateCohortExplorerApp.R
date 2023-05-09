@@ -198,11 +198,13 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   checkmate::reportAssertions(collection = errorMessage)
 
-  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
-  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
-  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  ParallelLogger::addDefaultFileLogger(fileName = file.path(exportFolder, "log.txt"),
+                                       name = 'cohort_explorer_file_logger')
+  ParallelLogger::addDefaultErrorReportLogger(fileName = file.path(exportFolder, "errorReportR.txt"),
+                                              name = 'cohort_explorer_error_logger')
+  on.exit(ParallelLogger::unregisterLogger("cohort_explorer_file_logger", silent = TRUE))
   on.exit(
-    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    ParallelLogger::unregisterLogger('cohort_explorer_error_logger', silent = TRUE),
     add = TRUE
   )
 
