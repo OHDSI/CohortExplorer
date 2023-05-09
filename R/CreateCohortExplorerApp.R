@@ -355,7 +355,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       cohort_table = cohortTable,
       tempEmulationSchema = tempEmulationSchema,
       cohort_definition_id = cohortDefinitionId,
-      do_not_export_cohort_data = doNotExportCohortData,
       snakeCaseToCamelCase = TRUE
     ) %>%
       dplyr::tibble()
@@ -700,182 +699,303 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
 
   writeLines("Getting concept id.")
-  conceptIds <- DatabaseConnector::renderTranslateQuerySql(
+  DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "WITH concepts as
-        (
-          SELECT DISTINCT gender_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.person p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT period_type_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation_period p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT observation_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT observation_type_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT observation_source_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT drug_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_exposure p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT drug_type_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_exposure p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT drug_source_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_exposure p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT drug_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_era p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT visit_concept_id AS concept_id
-          FROM @cdm_database_schema.visit_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT visit_type_concept_id AS concept_id
-          FROM @cdm_database_schema.visit_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT visit_source_concept_id AS concept_id
-          FROM @cdm_database_schema.visit_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT procedure_concept_id AS concept_id
-          FROM @cdm_database_schema.procedure_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT procedure_type_concept_id AS concept_id
-          FROM @cdm_database_schema.procedure_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT procedure_source_concept_id AS concept_id
-          FROM @cdm_database_schema.procedure_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT condition_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT condition_type_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT condition_source_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT condition_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_era p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT measurement_concept_id AS concept_id
-          FROM @cdm_database_schema.measurement p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT measurement_type_concept_id AS concept_id
-          FROM @cdm_database_schema.measurement p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-
-          UNION
-
-          SELECT DISTINCT measurement_source_concept_id AS concept_id
-          FROM @cdm_database_schema.measurement p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-        )
-        SELECT DISTINCT c.concept_id,
-                c.domain_id,
-                c.concept_name,
-                c.vocabulary_id,
-                c.concept_code
-        FROM @vocabulary_database_schema.concept c
-        INNER JOIN
-            concepts c2
-        ON c.concept_id = c2.concept_id
-        ORDER BY c.concept_id;",
+    sql = " DROP TABLE IF EXISTS #person_concepts;
+            DROP TABLE IF EXISTS #obs_p_concepts;
+            DROP TABLE IF EXISTS #observation_concept;
+            DROP TABLE IF EXISTS #obs_typ_concept;
+            DROP TABLE IF EXISTS #obs_src_concept;
+            DROP TABLE IF EXISTS #drug_exp_concept;
+            DROP TABLE IF EXISTS #drug_typ_concept;
+            DROP TABLE IF EXISTS #drug_src_concept;
+            DROP TABLE IF EXISTS #drug_era_concept;
+            DROP TABLE IF EXISTS #visit_concept;
+            DROP TABLE IF EXISTS #visit_typ_concept;
+            DROP TABLE IF EXISTS #visit_src_concept;
+            DROP TABLE IF EXISTS #proc_concept;
+            DROP TABLE IF EXISTS #proc_typ_concept;
+            DROP TABLE IF EXISTS #proc_src_concept;
+            DROP TABLE IF EXISTS #cond_concept;
+            DROP TABLE IF EXISTS #cond_typ_concept;
+            DROP TABLE IF EXISTS #cond_src_concept;
+            DROP TABLE IF EXISTS #cond_era_concept;
+            DROP TABLE IF EXISTS #meas_concept;
+            DROP TABLE IF EXISTS #meas_typ_concept;
+            DROP TABLE IF EXISTS #meas_src_concept;
+            
+          	SELECT DISTINCT gender_concept_id AS CONCEPT_ID
+          	INTO #person_concepts
+          	FROM @cdm_database_schema.person p
+          	INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT period_type_concept_id AS CONCEPT_ID
+            INTO #obs_p_concepts
+            FROM @cdm_database_schema.observation_period p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT observation_concept_id AS CONCEPT_ID
+            INTO #observation_concept
+            FROM @cdm_database_schema.observation p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT observation_type_concept_id AS CONCEPT_ID
+            INTO #obs_typ_concept
+            FROM @cdm_database_schema.observation p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT observation_source_concept_id AS CONCEPT_ID
+            INTO #obs_src_concept
+            FROM @cdm_database_schema.observation p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT drug_concept_id AS concept_id
+            INTO #drug_exp_concept
+            FROM @cdm_database_schema.drug_exposure p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT drug_type_concept_id AS concept_id
+            INTO #drug_typ_concept
+            FROM @cdm_database_schema.drug_exposure p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT drug_source_concept_id AS concept_id
+            INTO #drug_src_concept
+            FROM @cdm_database_schema.drug_exposure p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT drug_concept_id AS concept_id
+            INTO #drug_era_concept
+            FROM @cdm_database_schema.drug_era p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT visit_concept_id AS concept_id
+            INTO #visit_concept
+            FROM @cdm_database_schema.visit_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT visit_type_concept_id AS concept_id
+            INTO #visit_typ_concept
+            FROM @cdm_database_schema.visit_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT visit_source_concept_id AS concept_id
+            INTO #visit_src_concept
+            FROM @cdm_database_schema.visit_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT procedure_concept_id AS concept_id
+            INTO #proc_concept
+            FROM @cdm_database_schema.procedure_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT procedure_type_concept_id AS concept_id
+            INTO #proc_typ_concept
+            FROM @cdm_database_schema.procedure_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT procedure_source_concept_id AS concept_id
+            INTO #proc_src_concept
+            FROM @cdm_database_schema.procedure_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT condition_concept_id AS concept_id
+            INTO #cond_concept
+            FROM @cdm_database_schema.condition_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT condition_type_concept_id AS concept_id
+            INTO #cond_typ_concept
+            FROM @cdm_database_schema.condition_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT condition_source_concept_id AS concept_id
+            INTO #cond_src_concept
+            FROM @cdm_database_schema.condition_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT condition_concept_id AS concept_id
+            INTO #cond_era_concept
+            FROM @cdm_database_schema.condition_era p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT measurement_concept_id AS concept_id
+            INTO #meas_concept
+            FROM @cdm_database_schema.measurement p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT measurement_type_concept_id AS concept_id
+            INTO #meas_typ_concept
+            FROM @cdm_database_schema.measurement p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            SELECT DISTINCT measurement_source_concept_id AS concept_id
+            INTO #meas_src_concept
+            FROM @cdm_database_schema.measurement p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
+            
+            WITH concepts AS (
+            		SELECT *
+            		FROM #person_concepts
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #obs_p_concepts
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #observation_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #obs_typ_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #obs_src_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #drug_exp_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #drug_typ_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #drug_src_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #drug_era_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #visit_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #visit_typ_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #visit_src_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #proc_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #proc_typ_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #proc_src_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #cond_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #cond_typ_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #cond_src_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #cond_era_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #meas_concept
+            		
+            		UNION ALL
+            		
+            		SELECT *
+            		FROM #meas_typ_concept
+            		
+            		UNION
+            		
+            		SELECT *
+            		FROM #meas_src_concept
+            		)
+            
+            SELECT DISTINCT c.concept_id,
+            	c.domain_id,
+            	c.concept_name,
+            	c.vocabulary_id,
+            	c.concept_code
+            INTO #all_concepts
+            FROM @vocabulary_database_schema.concept c
+            INNER JOIN (
+            	SELECT DISTINCT CONCEPT_ID
+            	FROM concepts
+            	) c2 ON c.concept_id = c2.concept_id
+            ORDER BY c.concept_id;
+    
+            DROP TABLE IF EXISTS #person_concepts;
+            DROP TABLE IF EXISTS #obs_p_concepts;
+            DROP TABLE IF EXISTS #observation_concept;
+            DROP TABLE IF EXISTS #obs_typ_concept;
+            DROP TABLE IF EXISTS #obs_src_concept;
+            DROP TABLE IF EXISTS #drug_exp_concept;
+            DROP TABLE IF EXISTS #drug_typ_concept;
+            DROP TABLE IF EXISTS #drug_src_concept;
+            DROP TABLE IF EXISTS #drug_era_concept;
+            DROP TABLE IF EXISTS #visit_concept;
+            DROP TABLE IF EXISTS #visit_typ_concept;
+            DROP TABLE IF EXISTS #visit_src_concept;
+            DROP TABLE IF EXISTS #proc_concept;
+            DROP TABLE IF EXISTS #proc_typ_concept;
+            DROP TABLE IF EXISTS #proc_src_concept;
+            DROP TABLE IF EXISTS #cond_concept;
+            DROP TABLE IF EXISTS #cond_typ_concept;
+            DROP TABLE IF EXISTS #cond_src_concept;
+            DROP TABLE IF EXISTS #cond_era_concept;
+            DROP TABLE IF EXISTS #meas_concept;
+            DROP TABLE IF EXISTS #meas_typ_concept;
+            DROP TABLE IF EXISTS #meas_src_concept;",
     cdm_database_schema = cdmDatabaseSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    snakeCaseToCamelCase = TRUE
+    tempEmulationSchema = tempEmulationSchema
+  ) 
+  
+  conceptIds <- DatabaseConnector::renderTranslateQuerySql(
+    sql = "SELECT * FROM #all_concepts;",
+    connection = connection,
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
   ) %>%
     dplyr::tibble()
 
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "DROP TABLE IF EXISTS #persons_filter;",
+    sql = " DROP TABLE IF EXISTS #persons_filter;
+            DROP TABLE IF EXISTS #all_concepts;",
     tempEmulationSchema = tempEmulationSchema
   )
 
@@ -901,7 +1021,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       .groups = "keep"
     ) %>%
     dplyr::ungroup()
-
 
   shiftDatesInData <- function(data,
                                originDate = as.Date("2000-01-01"),
