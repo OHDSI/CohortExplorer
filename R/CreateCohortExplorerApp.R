@@ -1143,8 +1143,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   exportCohortExplorerAppFiles(exportFolder)
 
-  ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
-
   dir.create(
     path = (file.path(
       exportFolder,
@@ -1159,12 +1157,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   )
 
   delta <- Sys.time() - startTime
-  ParallelLogger::logInfo(
-    " - Extracting person level data took ",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
   message(
     sprintf(
       "The CohortExplorer Shiny app has been created at '%s'.
