@@ -7,3 +7,4 @@
 .Rprofile
 errorReportSql.txt
 *.RData
+tests/testthat/testthat-problems.rds

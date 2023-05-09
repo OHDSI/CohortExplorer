@@ -1,4 +1,113 @@
-test_that("Extract person level data", {
+test_that("Create app with cohort data in temp table", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  library(dplyr)
+
+  createCohortTableSql <- "
+    DROP TABLE IF EXISTS #temp_cohort_table;
+
+    SELECT o1.person_id subject_id,
+            1 cohort_definition_id,
+            o1.observation_period_start_date cohort_start_date,
+            o1.observation_period_end_date cohort_end_date
+    INTO #temp_cohort_table
+    FROM @cdm_database_schema.observation_period o1
+    INNER JOIN
+          (
+            SELECT person_id,
+                    ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id
+            FROM
+              (
+                SELECT DISTINCT person_id
+                FROM @cdm_database_schema.observation_period
+              ) a
+          ) b
+    ON o1.person_id = b.person_id
+    WHERE new_id < 10
+  ;"
+
+  connection <-
+    DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = createCohortTableSql,
+    profile = FALSE,
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
+    cdm_database_schema = cdmDatabaseSchema
+  )
+
+  outputDir <- tempfile()
+
+  outputLocation <- createCohortExplorerApp(
+    connection = connection,
+    cohortDatabaseSchema = NULL,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cohortTable = "#temp_cohort_table",
+    cohortDefinitionId = c(1),
+    sampleSize = 100,
+    databaseId = "databaseData",
+    exportFolder = outputDir
+  )
+
+  testthat::expect_true(file.exists(file.path(outputDir, "data")))
+})
+
+
+test_that("Error because database has space", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  outputDir <- tempfile()
+
+  testthat::expect_error(
+    createCohortExplorerApp(
+      connectionDetails = connectionDetails,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortDefinitionId = c(1),
+      sampleSize = 100,
+      databaseId = "database Data",
+      exportFolder = outputDir
+    )
+  )
+
+  unlink(
+    x = outputDir,
+    recursive = TRUE,
+    force = TRUE
+  )
+})
+
+test_that("no connection or connection details", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  outputDir <- tempfile()
+
+  testthat::expect_error(
+    createCohortExplorerApp(
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortDefinitionId = c(1),
+      sampleSize = 100,
+      databaseId = "database Data",
+      exportFolder = outputDir
+    )
+  )
+
+  unlink(
+    x = outputDir,
+    recursive = TRUE,
+    force = TRUE
+  )
+})
+
+test_that("Cohort has no data", {
   skip_if(skipCdmTests, "cdm settings not configured")
 
   library(dplyr)
@@ -25,34 +134,6 @@ test_that("Extract person level data", {
 
   outputDir <- tempfile()
 
-  # database id has space
-  testthat::expect_error(
-    createCohortExplorerApp(
-      connectionDetails = connectionDetails,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortDefinitionId = c(1),
-      sampleSize = 100,
-      databaseId = "databaseData 001",
-      exportFolder = outputDir
-    )
-  )
-
-  # no connection or connectionDetails
-  testthat::expect_error(
-    createCohortExplorerApp(
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortDefinitionId = c(1),
-      sampleSize = 100,
-      databaseId = "databaseData",
-      exportFolder = outputDir
-    )
-  )
   # cohort table has no subjects
   testthat::expect_warning(
     createCohortExplorerApp(
@@ -68,29 +149,59 @@ test_that("Extract person level data", {
     )
   )
 
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  unlink(
+    x = outputDir,
+    recursive = TRUE,
+    force = TRUE
+  )
+})
+
+
+test_that("create rand 100 in cohort", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  library(dplyr)
+
+  connection <-
+    DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
 
-  # create a cohort table using databaseData data
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = "DELETE FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = 1;
-            INSERT INTO @cohort_database_schema.@cohort_table (cohort_definition_id,
-                                                                subject_id,
-                                                                cohort_start_date,
-                                                                cohort_end_date)
-            SELECT cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
+  # create a cohort with 1000 persons
+  createCohortTableSql <- "
+    DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
+
+    SELECT o1.person_id subject_id,
+            1 cohort_definition_id,
+            o1.observation_period_start_date cohort_start_date,
+            o1.observation_period_end_date cohort_end_date
+    INTO @cohort_database_schema.@cohort_table
+    FROM @cdm_database_schema.observation_period o1
+    INNER JOIN
+          (
+            SELECT person_id,
+                    ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id
             FROM
               (
-                SELECT  1 cohort_definition_id,
-                        10 subject_id,
-                        CAST('20000101' AS DATE) cohort_start_date,
-                        CAST('20101231' AS DATE) cohort_end_date
-              ) a;
-            ",
+                SELECT DISTINCT person_id
+                FROM @cdm_database_schema.observation_period
+              ) a
+          ) b
+    ON o1.person_id = b.person_id
+    WHERE new_id <= 1000
+  ;"
+
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = createCohortTableSql,
+    profile = FALSE,
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
     cohort_database_schema = cohortDatabaseSchema,
+    cdm_database_schema = cdmDatabaseSchema,
     cohort_table = cohortTable
   )
+
+  outputDir <- tempfile()
 
   createCohortExplorerApp(
     connection = connection,
@@ -106,6 +217,55 @@ test_that("Extract person level data", {
 
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
+})
+
+
+
+test_that("create rand 100 in cohort with date shifting", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  library(dplyr)
+
+  connection <-
+    DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+
+  # create a cohort with 1000 persons
+  createCohortTableSql <- "
+    DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
+
+    SELECT o1.person_id subject_id,
+            1 cohort_definition_id,
+            o1.observation_period_start_date cohort_start_date,
+            o1.observation_period_end_date cohort_end_date
+    INTO @cohort_database_schema.@cohort_table
+    FROM @cdm_database_schema.observation_period o1
+    INNER JOIN
+          (
+            SELECT person_id,
+                    ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id
+            FROM
+              (
+                SELECT DISTINCT person_id
+                FROM @cdm_database_schema.observation_period
+              ) a
+          ) b
+    ON o1.person_id = b.person_id
+    WHERE new_id <= 1000
+  ;"
+
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = createCohortTableSql,
+    profile = FALSE,
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
+    cohort_database_schema = cohortDatabaseSchema,
+    cdm_database_schema = cdmDatabaseSchema,
+    cohort_table = cohortTable
+  )
+
+  outputDir <- tempfile()
 
   createCohortExplorerApp(
     connection = connection,
@@ -115,20 +275,45 @@ test_that("Extract person level data", {
     cohortTable = cohortTable,
     cohortDefinitionId = c(1),
     sampleSize = 100,
-    personIds = c(1:100),
+    personIds = c(10, 11),
     databaseId = "databaseData",
     exportFolder = outputDir,
     assignNewId = TRUE,
     shiftDates = TRUE
   )
 
+  testthat::expect_true(file.exists(file.path(outputDir)))
+  testthat::expect_true(file.exists(file.path(outputDir, "data")))
+})
+
+
+test_that("do Not Export CohortData", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  library(dplyr)
+
+  connection <-
+    DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+
+  createCohortTableSql <- "
+    DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;"
+
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = createCohortTableSql,
+    profile = FALSE,
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
+    cohort_database_schema = cohortDatabaseSchema,
+    cohort_table = cohortTable
+  )
+  outputDir <- tempfile()
   outputPath <- createCohortExplorerApp(
     connection = connection,
-    cohortDatabaseSchema = cohortDatabaseSchema,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     cohortTable = cohortTable,
-    cohortDefinitionId = c(1),
     sampleSize = 100,
     doNotExportCohortData = TRUE,
     databaseId = "databaseData",

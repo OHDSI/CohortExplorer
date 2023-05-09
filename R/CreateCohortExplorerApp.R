@@ -75,7 +75,7 @@
 #' @export
 createCohortExplorerApp <- function(connectionDetails = NULL,
                                     connection = NULL,
-                                    cohortDatabaseSchema = "cohort",
+                                    cohortDatabaseSchema = NULL,
                                     cdmDatabaseSchema,
                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
                                     tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
@@ -89,8 +89,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                                     databaseId,
                                     shiftDates = FALSE,
                                     assignNewId = FALSE) {
-  startTime <- Sys.time()
-
   errorMessage <- checkmate::makeAssertCollection()
 
   checkmate::assertLogical(
@@ -112,7 +110,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   checkmate::assertCharacter(
     x = cohortDatabaseSchema,
-    min.len = 1,
+    min.len = 0,
+    max.len = 1,
+    null.ok = TRUE,
     add = errorMessage
   )
 
@@ -196,16 +196,37 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   checkmate::reportAssertions(collection = errorMessage)
 
+  ParallelLogger::addDefaultFileLogger(
+    fileName = file.path(exportFolder, "log.txt"),
+    name = "cohort_explorer_file_logger"
+  )
+  ParallelLogger::addDefaultErrorReportLogger(
+    fileName = file.path(exportFolder, "errorReportR.txt"),
+    name = "cohort_explorer_error_logger"
+  )
+  on.exit(ParallelLogger::unregisterLogger("cohort_explorer_file_logger", silent = TRUE))
+  on.exit(
+    ParallelLogger::unregisterLogger("cohort_explorer_error_logger", silent = TRUE),
+    add = TRUE
+  )
+
   originalDatabaseId <- databaseId
+
+  cohortTableIsTemp <- FALSE
+  if (is.null(cohortDatabaseSchema)) {
+    if (grepl(
+      pattern = "#",
+      x = cohortTable,
+      fixed = TRUE
+    )) {
+      cohortTableIsTemp <- TRUE
+    } else {
+      stop("cohortDatabaseSchema is NULL, but cohortTable is not temporary.")
+    }
+  }
 
   databaseId <- as.character(gsub(
     pattern = " ",
-    replacement = "",
-    x = databaseId
-  ))
-
-  databaseId <- as.character(gsub(
-    pattern = "_",
     replacement = "",
     x = databaseId
   ))
@@ -235,62 +256,117 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     }
   }
 
-  if (!is.null(personIds)) {
-    persons <- dplyr::tibble(personId = personIds) %>%
-      dplyr::mutate(randomNumber = runif(n = 1)) %>%
-      dplyr::arrange(.data$randomNumber) %>%
-      dplyr::mutate(newId = dplyr::row_number()) %>%
-      dplyr::select(-.data$randomNumber)
-
-    DatabaseConnector::insertTable(
-      connection = connection,
-      tableName = "#persons_filter",
-      createTable = TRUE,
-      dropTableIfExists = TRUE,
-      tempTable = TRUE,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = TRUE,
-      bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
-      camelCaseToSnakeCase = TRUE,
-      data = persons
-    )
-    sampleSize <- nrow(persons)
+  if (cohortTableIsTemp) {
+    personIdsInDataSource <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT DISTINCT subject_id
+               FROM @cohort_table
+               WHERE cohort_definition_id = @cohort_definition_id;",
+        cohort_table = cohortTable,
+        tempEmulationSchema = tempEmulationSchema,
+        cohort_definition_id = cohortDefinitionId,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      dplyr::pull("subjectId")
   } else {
-    # take a random sample
-    sql <- "DROP TABLE IF EXISTS #persons_filter;
-            SELECT *
-            INTO #persons_filter
-            FROM
-            (
-              SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
-              FROM (
-                  	{!@do_not_export_cohort_data} ? {SELECT DISTINCT subject_id person_id
-                      	                            FROM @cohort_database_schema.@cohort_table
-                      	                            WHERE cohort_definition_id = @cohort_definition_id} : {
-                                                  	SELECT DISTINCT person_id
-                                                  	FROM @cohort_database_schema.@cohort_table
-                                                  	}
-              	) all_ids
-            ) f
-            WHERE new_id <= @sample_size;"
-
-    writeLines("Attempting to find random subjects.")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      sample_size = sampleSize,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      cohort_definition_id = cohortDefinitionId,
-      do_not_export_cohort_data = doNotExportCohortData
-    )
+    if (doNotExportCohortData) {
+      personIdsInDataSource <-
+        DatabaseConnector::renderTranslateQuerySql(
+          connection = connection,
+          sql = "SELECT DISTINCT person_id
+               FROM @cdm_database_schema.observation_period;",
+          cdm_database_schema = cdmDatabaseSchema,
+          snakeCaseToCamelCase = TRUE
+        ) %>%
+        dplyr::pull("personId")
+    } else {
+      personIdsInDataSource <-
+        DatabaseConnector::renderTranslateQuerySql(
+          connection = connection,
+          sql = "SELECT DISTINCT subject_id
+                 FROM @cohort_database_schema.@cohort_table
+                 WHERE cohort_definition_id = @cohort_definition_id;",
+          cohort_table = cohortTable,
+          cohort_database_schema = cohortDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohort_definition_id = cohortDefinitionId,
+          snakeCaseToCamelCase = TRUE
+        ) %>%
+        dplyr::pull("subjectId")
+    }
   }
 
-  writeLines("Getting cohort table.")
-  cohort <- DatabaseConnector::renderTranslateQuerySql(
+  if (!is.null(personIds)) {
+    persons <- dplyr::tibble(personId = personIds) %>%
+      dplyr::mutate("randomNumber" = runif(n = 1)) %>%
+      dplyr::arrange(.data$randomNumber) %>%
+      dplyr::mutate(newId = dplyr::row_number()) %>%
+      dplyr::select(-"randomNumber")
+
+    personIdsInDataSource <-
+      intersect(persons$personId, personIdsInDataSource)
+  }
+
+  # take random sample
+  personIdsInDataSourceSample <-
+    dplyr::tibble(personId = takeRandomSample(
+      x = personIdsInDataSource,
+      size = min(
+        length(personIdsInDataSource), sampleSize
+      )
+    ))
+
+  DatabaseConnector::insertTable(
     connection = connection,
-    sql = "SELECT {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id subject_id},
+    tableName = "#persons_filter_no_id",
+    createTable = TRUE,
+    dropTableIfExists = TRUE,
+    tempTable = TRUE,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = TRUE,
+    bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
+    camelCaseToSnakeCase = TRUE,
+    data = personIdsInDataSourceSample
+  )
+
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = "DROP TABLE IF EXISTS #persons_filter;
+              SELECT *
+              INTO #persons_filter
+              FROM
+              (
+                SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
+                FROM #persons_filter_no_id
+              ) f;",
+    tempEmulationSchema = tempEmulationSchema
+  )
+
+  if (cohortTableIsTemp) {
+    writeLines("Getting cohort table.")
+    cohort <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT c.subject_id,
+                    p.new_id,
+                    c.cohort_start_date AS start_date,
+                	  c.cohort_end_date AS end_date
+              FROM @cohort_table c
+              INNER JOIN #persons_filter p
+              ON c.subject_id = p.person_id
+              WHERE c.cohort_definition_id = @cohort_definition_id
+              ORDER BY c.subject_id, c.cohort_start_date;",
+      cohort_table = cohortTable,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_definition_id = cohortDefinitionId,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+      dplyr::tibble()
+  } else {
+    writeLines("Getting cohort table.")
+    cohort <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id subject_id},
                   p.new_id,
                   {!@do_not_export_cohort_data} ? {cohort_start_date AS start_date,
               	                              cohort_end_date AS end_date} : {
@@ -303,14 +379,15 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
               {!@do_not_export_cohort_data} ? {WHERE cohort_definition_id = @cohort_definition_id}
           ORDER BY {!@do_not_export_cohort_data} ? {c.subject_id} : {c.person_id},
                     {!@do_not_export_cohort_data} ? {cohort_start_date} : {observation_period_start_date};",
-    cohort_database_schema = cohortDatabaseSchema,
-    cohort_table = cohortTable,
-    tempEmulationSchema = tempEmulationSchema,
-    cohort_definition_id = cohortDefinitionId,
-    do_not_export_cohort_data = doNotExportCohortData,
-    snakeCaseToCamelCase = TRUE
-  ) %>%
-    dplyr::tibble()
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_definition_id = cohortDefinitionId,
+      do_not_export_cohort_data = doNotExportCohortData,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+      dplyr::tibble()
+  }
 
   if (nrow(cohort) == 0) {
     warning("Cohort does not have the selected subject ids. No shiny app created.")
@@ -343,10 +420,10 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
           .groups = "keep"
         ) %>%
         dplyr::ungroup() %>%
-        dplyr::rename("personId" = .data$subjectId),
+        dplyr::rename("personId" = "subjectId"),
       by = "personId"
     ) %>%
-    dplyr::mutate(age = .data$yearOfCohort - .data$yearOfBirth) %>%
+    dplyr::mutate("age" = .data$yearOfCohort - .data$yearOfBirth) %>%
     dplyr::select(-"yearOfCohort", -"yearOfBirth")
 
   writeLines("Getting observation period table.")
@@ -626,187 +703,308 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
 
   writeLines("Getting concept id.")
-  conceptIds <- DatabaseConnector::renderTranslateQuerySql(
+  DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "WITH concepts as
-        (
-          SELECT DISTINCT gender_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.person p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+    sql = " DROP TABLE IF EXISTS #person_concepts;
+            DROP TABLE IF EXISTS #obs_p_concepts;
+            DROP TABLE IF EXISTS #observation_concept;
+            DROP TABLE IF EXISTS #obs_typ_concept;
+            DROP TABLE IF EXISTS #obs_src_concept;
+            DROP TABLE IF EXISTS #drug_exp_concept;
+            DROP TABLE IF EXISTS #drug_typ_concept;
+            DROP TABLE IF EXISTS #drug_src_concept;
+            DROP TABLE IF EXISTS #drug_era_concept;
+            DROP TABLE IF EXISTS #visit_concept;
+            DROP TABLE IF EXISTS #visit_typ_concept;
+            DROP TABLE IF EXISTS #visit_src_concept;
+            DROP TABLE IF EXISTS #proc_concept;
+            DROP TABLE IF EXISTS #proc_typ_concept;
+            DROP TABLE IF EXISTS #proc_src_concept;
+            DROP TABLE IF EXISTS #cond_concept;
+            DROP TABLE IF EXISTS #cond_typ_concept;
+            DROP TABLE IF EXISTS #cond_src_concept;
+            DROP TABLE IF EXISTS #cond_era_concept;
+            DROP TABLE IF EXISTS #meas_concept;
+            DROP TABLE IF EXISTS #meas_typ_concept;
+            DROP TABLE IF EXISTS #meas_src_concept;
 
-          UNION
+          	SELECT DISTINCT gender_concept_id AS CONCEPT_ID
+          	INTO #person_concepts
+          	FROM @cdm_database_schema.person p
+          	INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT period_type_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation_period p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT period_type_concept_id AS CONCEPT_ID
+            INTO #obs_p_concepts
+            FROM @cdm_database_schema.observation_period p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT observation_concept_id AS CONCEPT_ID
+            INTO #observation_concept
+            FROM @cdm_database_schema.observation p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT observation_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT observation_type_concept_id AS CONCEPT_ID
+            INTO #obs_typ_concept
+            FROM @cdm_database_schema.observation p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT observation_source_concept_id AS CONCEPT_ID
+            INTO #obs_src_concept
+            FROM @cdm_database_schema.observation p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT observation_type_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT drug_concept_id AS concept_id
+            INTO #drug_exp_concept
+            FROM @cdm_database_schema.drug_exposure p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT drug_type_concept_id AS concept_id
+            INTO #drug_typ_concept
+            FROM @cdm_database_schema.drug_exposure p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT observation_source_concept_id AS CONCEPT_ID
-          FROM @cdm_database_schema.observation p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT drug_source_concept_id AS concept_id
+            INTO #drug_src_concept
+            FROM @cdm_database_schema.drug_exposure p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT drug_concept_id AS concept_id
+            INTO #drug_era_concept
+            FROM @cdm_database_schema.drug_era p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT drug_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_exposure p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT visit_concept_id AS concept_id
+            INTO #visit_concept
+            FROM @cdm_database_schema.visit_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT visit_type_concept_id AS concept_id
+            INTO #visit_typ_concept
+            FROM @cdm_database_schema.visit_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT drug_type_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_exposure p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT visit_source_concept_id AS concept_id
+            INTO #visit_src_concept
+            FROM @cdm_database_schema.visit_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT procedure_concept_id AS concept_id
+            INTO #proc_concept
+            FROM @cdm_database_schema.procedure_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT drug_source_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_exposure p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT procedure_type_concept_id AS concept_id
+            INTO #proc_typ_concept
+            FROM @cdm_database_schema.procedure_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT procedure_source_concept_id AS concept_id
+            INTO #proc_src_concept
+            FROM @cdm_database_schema.procedure_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT drug_concept_id AS concept_id
-          FROM @cdm_database_schema.drug_era p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT condition_concept_id AS concept_id
+            INTO #cond_concept
+            FROM @cdm_database_schema.condition_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT condition_type_concept_id AS concept_id
+            INTO #cond_typ_concept
+            FROM @cdm_database_schema.condition_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT visit_concept_id AS concept_id
-          FROM @cdm_database_schema.visit_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT condition_source_concept_id AS concept_id
+            INTO #cond_src_concept
+            FROM @cdm_database_schema.condition_occurrence p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT condition_concept_id AS concept_id
+            INTO #cond_era_concept
+            FROM @cdm_database_schema.condition_era p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT visit_type_concept_id AS concept_id
-          FROM @cdm_database_schema.visit_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT measurement_concept_id AS concept_id
+            INTO #meas_concept
+            FROM @cdm_database_schema.measurement p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            SELECT DISTINCT measurement_type_concept_id AS concept_id
+            INTO #meas_typ_concept
+            FROM @cdm_database_schema.measurement p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          SELECT DISTINCT visit_source_concept_id AS concept_id
-          FROM @cdm_database_schema.visit_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            SELECT DISTINCT measurement_source_concept_id AS concept_id
+            INTO #meas_src_concept
+            FROM @cdm_database_schema.measurement p
+            INNER JOIN #persons_filter pf ON p.person_id = pf.person_id;
 
-          UNION
+            WITH concepts AS (
+            		SELECT *
+            		FROM #person_concepts
 
-          SELECT DISTINCT procedure_concept_id AS concept_id
-          FROM @cdm_database_schema.procedure_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #obs_p_concepts
 
-          SELECT DISTINCT procedure_type_concept_id AS concept_id
-          FROM @cdm_database_schema.procedure_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #observation_concept
 
-          SELECT DISTINCT procedure_source_concept_id AS concept_id
-          FROM @cdm_database_schema.procedure_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #obs_typ_concept
 
-          SELECT DISTINCT condition_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #obs_src_concept
 
-          SELECT DISTINCT condition_type_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #drug_exp_concept
 
-          SELECT DISTINCT condition_source_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_occurrence p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #drug_typ_concept
 
-          SELECT DISTINCT condition_concept_id AS concept_id
-          FROM @cdm_database_schema.condition_era p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #drug_src_concept
 
-          SELECT DISTINCT measurement_concept_id AS concept_id
-          FROM @cdm_database_schema.measurement p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #drug_era_concept
 
-          SELECT DISTINCT measurement_type_concept_id AS concept_id
-          FROM @cdm_database_schema.measurement p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
+            		UNION ALL
 
-          UNION
+            		SELECT *
+            		FROM #visit_concept
 
-          SELECT DISTINCT measurement_source_concept_id AS concept_id
-          FROM @cdm_database_schema.measurement p
-          INNER JOIN #persons_filter pf
-          ON p.person_id = pf.person_id
-        )
-        SELECT DISTINCT c.concept_id,
-                c.domain_id,
-                c.concept_name,
-                c.vocabulary_id,
-                c.concept_code
-        FROM @vocabulary_database_schema.concept c
-        INNER JOIN
-            concepts c2
-        ON c.concept_id = c2.concept_id
-        ORDER BY c.concept_id;",
+            		UNION ALL
+
+            		SELECT *
+            		FROM #visit_typ_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #visit_src_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #proc_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #proc_typ_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #proc_src_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #cond_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #cond_typ_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #cond_src_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #cond_era_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #meas_concept
+
+            		UNION ALL
+
+            		SELECT *
+            		FROM #meas_typ_concept
+
+            		UNION
+
+            		SELECT *
+            		FROM #meas_src_concept
+            		)
+
+            SELECT DISTINCT c.concept_id,
+            	c.domain_id,
+            	c.concept_name,
+            	c.vocabulary_id,
+            	c.concept_code
+            INTO #all_concepts
+            FROM @vocabulary_database_schema.concept c
+            INNER JOIN (
+            	SELECT DISTINCT CONCEPT_ID
+            	FROM concepts
+            	) c2 ON c.concept_id = c2.concept_id
+            ORDER BY c.concept_id;
+
+            DROP TABLE IF EXISTS #person_concepts;
+            DROP TABLE IF EXISTS #obs_p_concepts;
+            DROP TABLE IF EXISTS #observation_concept;
+            DROP TABLE IF EXISTS #obs_typ_concept;
+            DROP TABLE IF EXISTS #obs_src_concept;
+            DROP TABLE IF EXISTS #drug_exp_concept;
+            DROP TABLE IF EXISTS #drug_typ_concept;
+            DROP TABLE IF EXISTS #drug_src_concept;
+            DROP TABLE IF EXISTS #drug_era_concept;
+            DROP TABLE IF EXISTS #visit_concept;
+            DROP TABLE IF EXISTS #visit_typ_concept;
+            DROP TABLE IF EXISTS #visit_src_concept;
+            DROP TABLE IF EXISTS #proc_concept;
+            DROP TABLE IF EXISTS #proc_typ_concept;
+            DROP TABLE IF EXISTS #proc_src_concept;
+            DROP TABLE IF EXISTS #cond_concept;
+            DROP TABLE IF EXISTS #cond_typ_concept;
+            DROP TABLE IF EXISTS #cond_src_concept;
+            DROP TABLE IF EXISTS #cond_era_concept;
+            DROP TABLE IF EXISTS #meas_concept;
+            DROP TABLE IF EXISTS #meas_typ_concept;
+            DROP TABLE IF EXISTS #meas_src_concept;",
     cdm_database_schema = cdmDatabaseSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    snakeCaseToCamelCase = TRUE
+    tempEmulationSchema = tempEmulationSchema
+  )
+
+  conceptIds <- DatabaseConnector::renderTranslateQuerySql(
+    sql = "SELECT * FROM #all_concepts;",
+    connection = connection,
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
   ) %>%
     dplyr::tibble()
 
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "DROP TABLE IF EXISTS #persons_filter;",
+    sql = " DROP TABLE IF EXISTS #persons_filter;
+            DROP TABLE IF EXISTS #all_concepts;",
     tempEmulationSchema = tempEmulationSchema
   )
 
   cohort <- cohort %>%
-    dplyr::rename(personId = .data$subjectId)
+    dplyr::rename("personId" = "subjectId")
 
   subjects <- cohort %>%
     dplyr::group_by(.data$personId) %>%
@@ -817,7 +1015,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     dplyr::inner_join(conceptIds,
       by = c("genderConceptId" = "conceptId")
     ) %>%
-    dplyr::rename(gender = .data$conceptName) %>%
+    dplyr::rename("gender" = "conceptName") %>%
     dplyr::ungroup()
 
   personMinObservationPeriodDate <- observationPeriod %>%
@@ -887,18 +1085,6 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     measurement <- shiftDatesInData(data = measurement)
   }
 
-  replaceId <- function(data, useNewId = TRUE) {
-    if (useNewId) {
-      data <- data %>%
-        dplyr::select(-.data$personId) %>%
-        dplyr::rename("personId" = .data$newId)
-    } else {
-      data <- data %>%
-        dplyr::select(-"newId")
-    }
-    return(data)
-  }
-
   cohort <- replaceId(data = cohort, useNewId = assignNewId)
   person <- replaceId(data = person, useNewId = assignNewId)
   subjects <- replaceId(data = subjects, useNewId = assignNewId)
@@ -957,48 +1143,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     sampleFound = nrow(subjects)
   )
 
-  filesToCopys <- dplyr::tibble(
-    fullPath = list.files(
-      path = system.file("shiny", package = utils::packageName()),
-      include.dirs = TRUE,
-      all.files = TRUE,
-      recursive = TRUE,
-      full.names = TRUE
-    )
-  )
-  filesToCopys$relativePath <-
-    gsub(
-      pattern = paste0(system.file("shiny", package = utils::packageName()), "/"),
-      replacement = "",
-      fixed = TRUE,
-      x = filesToCopys$fullPath
-    )
-
-  for (i in (1:nrow(filesToCopys))) {
-    dir.create(
-      path = dirname(
-        file.path(
-          exportFolder,
-          filesToCopys[i, ]$relativePath
-        )
-      ),
-      showWarnings = FALSE,
-      recursive = TRUE
-    )
-    file.copy(
-      from = filesToCopys[i, ]$fullPath,
-      to = dirname(
-        file.path(
-          exportFolder,
-          filesToCopys[i, ]$relativePath
-        )
-      ),
-      overwrite = TRUE,
-      recursive = TRUE
-    )
-  }
-
-  ParallelLogger::logInfo(paste0("Writing ", rdsFileName))
+  exportCohortExplorerAppFiles(exportFolder)
 
   dir.create(
     path = (file.path(
@@ -1013,17 +1158,13 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     file = file.path(exportFolder, "data", rdsFileName)
   )
 
-  delta <- Sys.time() - startTime
-  ParallelLogger::logInfo(
-    " - Extracting person level data took ",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
   message(
-    sprintf("The CohortExplorer Shiny app has been created at '%s'.
+    sprintf(
+      "The CohortExplorer Shiny app has been created at '%s'.
                      Please view the README file in that folder for instructions
-                     on how to run.", exportFolder)
+                     on how to run.",
+      exportFolder
+    )
   )
   return(invisible(exportFolder))
 }

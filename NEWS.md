@@ -1,3 +1,9 @@
+CohortExplorer 0.0.13
+======================
+
+Support temp cohort table
+Updates tests
+
 CohortExplorer 0.0.12
 ======================
 
