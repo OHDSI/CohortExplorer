@@ -10,11 +10,7 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
 } else {
   jdbcDriverFolder <- tempfile("jdbcDrivers")
   dir.create(jdbcDriverFolder, showWarnings = FALSE)
-  DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-
-  if (!dbms %in% c("postgresql")) {
-    DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
-  }
+  DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
 
   withr::defer(
     {
@@ -34,11 +30,9 @@ if (dbms == "postgresql") {
   dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
   dbServer <- Sys.getenv("CDM5_POSTGRESQL_SERVER")
   cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-  vocabularyDatabaseSchema <-
-    Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+  vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
   tempEmulationSchema <- NULL
-  cohortDatabaseSchema <-
-    Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA")
+  cohortDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA")
 } else if (dbms == "oracle") {
   dbUser <- Sys.getenv("CDM5_ORACLE_USER")
   dbPassword <- Sys.getenv("CDM5_ORACLE_PASSWORD")
@@ -53,8 +47,7 @@ if (dbms == "postgresql") {
   dbPassword <- Sys.getenv("CDM5_REDSHIFT_PASSWORD")
   dbServer <- Sys.getenv("CDM5_REDSHIFT_SERVER")
   cdmDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
-  vocabularyDatabaseSchema <-
-    Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
+  vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
 } else if (dbms == "sql server") {
@@ -62,11 +55,9 @@ if (dbms == "postgresql") {
   dbPassword <- Sys.getenv("CDM5_SQL_SERVER_PASSWORD")
   dbServer <- Sys.getenv("CDM5_SQL_SERVER_SERVER")
   cdmDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
-  vocabularyDatabaseSchema <-
-    Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
+  vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
   tempEmulationSchema <- NULL
-  cohortDatabaseSchema <-
-    Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
+  cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
 }
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
@@ -83,8 +74,7 @@ if (cdmDatabaseSchema == "" || dbServer == "") {
 
 cohortTable <- paste0(
   "ct_",
-  gsub("[: -]", "", Sys.time(), perl = TRUE),
-  sample(1:100, 1)
+  paste(sample(letters, 10), collapse = "")
 )
 
 withr::defer(
