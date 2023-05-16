@@ -257,90 +257,95 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   }
 
   if (cohortTableIsTemp) {
-    personIdsInDataSource <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = "SELECT DISTINCT subject_id
-               FROM @cohort_table
-               WHERE cohort_definition_id = @cohort_definition_id;",
-        cohort_table = cohortTable,
-        tempEmulationSchema = tempEmulationSchema,
-        cohort_definition_id = cohortDefinitionId,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      dplyr::pull("subjectId")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = " DROP TABLE IF EXISTS #person_id_data;
+                SELECT DISTINCT subject_id
+                INTO #person_id_data
+                FROM @cohort_table
+                WHERE cohort_definition_id = @cohort_definition_id;",
+      cohort_table = cohortTable,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_definition_id = cohortDefinitionId
+    )
   } else {
     if (doNotExportCohortData) {
-      personIdsInDataSource <-
-        DatabaseConnector::renderTranslateQuerySql(
-          connection = connection,
-          sql = "SELECT DISTINCT person_id
-               FROM @cdm_database_schema.observation_period;",
-          cdm_database_schema = cdmDatabaseSchema,
-          snakeCaseToCamelCase = TRUE
-        ) %>%
-        dplyr::pull("personId")
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = " DROP TABLE IF EXISTS #person_id_data;
+                  SELECT DISTINCT person_id subject_id
+                  INTO #person_id_data
+                  FROM @cdm_database_schema.observation_period;",
+        cdm_database_schema = cdmDatabaseSchema
+      )
     } else {
-      personIdsInDataSource <-
-        DatabaseConnector::renderTranslateQuerySql(
-          connection = connection,
-          sql = "SELECT DISTINCT subject_id
-                 FROM @cohort_database_schema.@cohort_table
-                 WHERE cohort_definition_id = @cohort_definition_id;",
-          cohort_table = cohortTable,
-          cohort_database_schema = cohortDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohort_definition_id = cohortDefinitionId,
-          snakeCaseToCamelCase = TRUE
-        ) %>%
-        dplyr::pull("subjectId")
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = " DROP TABLE IF EXISTS #person_id_data;
+                  SELECT DISTINCT subject_id
+                  INTO #person_id_data
+                  FROM @cohort_database_schema.@cohort_table
+                  WHERE cohort_definition_id = @cohort_definition_id;",
+        cohort_table = cohortTable,
+        cohort_database_schema = cohortDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohort_definition_id = cohortDefinitionId
+      )
     }
   }
 
   if (!is.null(personIds)) {
-    persons <- dplyr::tibble(personId = personIds) %>%
-      dplyr::mutate("randomNumber" = runif(n = 1)) %>%
-      dplyr::arrange(.data$randomNumber) %>%
-      dplyr::mutate(newId = dplyr::row_number()) %>%
-      dplyr::select(-"randomNumber")
-
-    personIdsInDataSource <-
-      intersect(persons$personId, personIdsInDataSource)
+    DatabaseConnector::insertTable(
+      connection = connection,
+      tableName = "#persons_to_filter",
+      createTable = TRUE,
+      dropTableIfExists = TRUE,
+      tempTable = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = TRUE,
+      bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
+      camelCaseToSnakeCase = TRUE,
+      data = dplyr::tibble(subjectId = as.double(personIds) |> unique())
+    )
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "     DROP TABLE IF EXISTS #person_id_data2;
+                  SELECT DISTINCT a.subject_id
+                  INTO #person_id_data2
+                  FROM #person_id_data a
+                  INNER JOIN #persons_to_filter b
+                  ON a.subject_id = b.subject_id;
+      
+                  DROP TABLE IF EXISTS #person_id_data;
+                  SELECT DISTINCT subject_id
+                  INTO #person_id_data
+                  FROM #person_id_data2;
+                  
+                  DROP TABLE IF EXISTS #person_id_data2;
+                  ",
+      tempEmulationSchema = tempEmulationSchema
+    )
   }
 
-  # take random sample
-  personIdsInDataSourceSample <-
-    dplyr::tibble(personId = takeRandomSample(
-      x = personIdsInDataSource,
-      size = min(
-        length(personIdsInDataSource), sampleSize
-      )
-    ))
-
-  DatabaseConnector::insertTable(
-    connection = connection,
-    tableName = "#persons_filter_no_id",
-    createTable = TRUE,
-    dropTableIfExists = TRUE,
-    tempTable = TRUE,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = TRUE,
-    bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
-    camelCaseToSnakeCase = TRUE,
-    data = personIdsInDataSourceSample
-  )
-
+  # assign new id and filter to sample size
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = "DROP TABLE IF EXISTS #persons_filter;
-              SELECT *
+    sql = "   DROP TABLE IF EXISTS #persons_filter;
+              SELECT new_id, subject_id person_id
               INTO #persons_filter
               FROM
               (
-                SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, person_id
-                FROM #persons_filter_no_id
-              ) f;",
-    tempEmulationSchema = tempEmulationSchema
+                SELECT *
+                FROM
+                (
+                  SELECT ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id, subject_id
+                  FROM #person_id_data
+                ) f
+    ) t
+    WHERE new_id <= @sample_size;",
+    tempEmulationSchema = tempEmulationSchema,
+    sample_size = sampleSize
   )
 
   if (cohortTableIsTemp) {
