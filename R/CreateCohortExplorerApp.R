@@ -307,7 +307,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       camelCaseToSnakeCase = TRUE,
       data = dplyr::tibble(subjectId = as.double(personIds) |> unique())
     )
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = "     DROP TABLE IF EXISTS #person_id_data2;
@@ -316,12 +316,12 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                   FROM #person_id_data a
                   INNER JOIN #persons_to_filter b
                   ON a.subject_id = b.subject_id;
-      
+
                   DROP TABLE IF EXISTS #person_id_data;
                   SELECT DISTINCT subject_id
                   INTO #person_id_data
                   FROM #person_id_data2;
-                  
+
                   DROP TABLE IF EXISTS #person_id_data2;
                   ",
       tempEmulationSchema = tempEmulationSchema
