@@ -25,16 +25,3 @@ replaceId <- function(data, useNewId = TRUE) {
   }
   return(data)
 }
-
-
-takeRandomSample <- function(x, size) {
-  if (length(x) <= 1) {
-    return(x |> as.double())
-  } else {
-    return(sample(
-      x = x,
-      size = size,
-      replace = FALSE
-    )) |> as.double()
-  }
-}

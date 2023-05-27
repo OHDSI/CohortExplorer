@@ -1,6 +1,12 @@
 CohortExplorer 0.0.13
 ======================
 
+Reduces the need to move data into R
+
+
+CohortExplorer 0.0.13
+======================
+
 Support temp cohort table
 Updates tests
 
