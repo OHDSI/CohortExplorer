@@ -26,6 +26,7 @@ devtools::check()
 # Create manual -----------------------------------------------------------
 unlink("extras/CohortExplorer.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortExplorer.pdf")
+dir.create(path = file.path("inst", "doc"), showWarnings = FALSE, recursive = TRUE)
 
 # Create Vignettes---------------------------------------------------------
 rmarkdown::render("vignettes/HowToUseCohortExplorer.Rmd",

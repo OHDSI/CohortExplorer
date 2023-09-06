@@ -16,11 +16,11 @@ Imports:
   checkmate,
   clock,
   dplyr,
+  lifecycle,
   ParallelLogger,
   rlang,
   stats
 Suggests:
-  lifecycle,
   rmarkdown,
   SqlRender,
   testthat,
