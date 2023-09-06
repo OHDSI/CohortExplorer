@@ -4,7 +4,7 @@
 \name{CohortExplorer-package}
 \alias{CohortExplorer}
 \alias{CohortExplorer-package}
-\title{CohortExplorer: An R package with a Shiny viewer to explore profiles of patients in a cohort}
+\title{CohortExplorer: An R Package with a Shiny Viewer to Explore Profiles of Patients in a Cohort}
 \description{
 An R package with a Shiny viewer to explore profiles of patients in a cohort.
 }
