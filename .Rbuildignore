@@ -12,3 +12,4 @@ readme.md
 ^deploy.sh
 ^docs
 ^man-roxygen
+^cran-comments\.md$
