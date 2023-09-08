@@ -1,8 +1,8 @@
 Package: CohortExplorer
 Type: Package
-Title: An R package with a Shiny viewer to explore profiles of patients in a cohort
-Version: 0.0.14
-Date: 2022-05-27
+Title: An R Package with a Shiny Viewer to Explore Profiles of Patients in a Cohort
+Version: 0.0.15
+Date: 2023-09-06
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
@@ -22,10 +22,10 @@ Imports:
   stats
 Suggests:
   rmarkdown,
+  SqlRender,
   testthat,
   knitr,
-  withr,
-  SqlRender
+  withr
 License: Apache License
 RoxygenNote: 7.2.3
 VignetteBuilder: knitr
