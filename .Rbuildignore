@@ -13,3 +13,4 @@ readme.md
 ^docs
 ^man-roxygen
 ^cran-comments\.md$
+^CRAN-SUBMISSION$
