@@ -1,4 +1,9 @@
-CohortExplorer 0.0.13
+CohortExplorer 0.0.15
+======================
+Destination CRAN
+
+
+CohortExplorer 0.0.14
 ======================
 
 Reduces the need to move data into R
