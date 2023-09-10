@@ -36,26 +36,28 @@
 #'
 #' @param cohortName                  (optional) Cohort Name
 #'
-#' @param doNotExportCohortData       (Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId,
-#'                                     cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire
-#'                                     observation period would be considered the cohort. Cohort Name will be 'Observation Period', cohort
-#'                                     id will be set to 0.
-#'
-#' @param sampleSize                  (Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.
+#' @param doNotExportCohortData       (Optional) Do you want to not export cohort data? If set to true, parameters 
+#'                                    cohortDefinitionId, cohort, cohortDatabaseSchema, cohortName will be ignored. 
+#'                                    The persons entire observation period would be considered the cohort. Cohort 
+#'                                    Name will be 'Observation Period', cohort id will be set to 0.
+#' @param sampleSize                  (Optional, default = 20) The number of persons to randomly sample. 
+#'                                    Ignored, if personId is given.
 #'
 #' @param personIds                   (Optional) An array of personId's to look for in Cohort table and CDM.
 #'
-#' @param exportFolder                The folder where the output will be exported to. If this folder
-#'                                    does not exist it will be created.
-#' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf'). This will be displayed
-#'                                    in shiny app to toggle between databases. Should not have space or underscore (_).
-#'
-#' @param shiftDates                  (Default = FALSE) Do you want to shift dates? This will help further de-identify data. The shift
-#'                                    is the process of recalibrating dates such that all persons min(observation_period_start_date) is
-#'                                    2000-01-01.
-#'
-#' @param assignNewId                 (Default = FALSE) Do you want to assign a newId for persons. This will replace the personId in the source with a randomly assigned newId.
-#'
+#' @param exportFolder                The folder where the output will be exported to. If this folder does 
+#'                                    not exist it will be created. 
+#' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf'). This will 
+#'                                    be displayed in shiny app to toggle between databases. Should not have 
+#'                                    space or underscore (_).
+#' @param shiftDates                  (Default = FALSE) Do you want to shift dates? This will help further 
+#'                                    de-identify data. The shift is the process of re calibrating dates such 
+#'                                    that all persons mi (observation_period_start_date) is 2000-01-01.
+#' @param assignNewId                 (Default = FALSE) Do you want to assign a newId for persons. This will 
+#'                                    replace the personId in the source with a randomly assigned newId.
+#' @returns                           Returns invisibly the full path of the export folder where the 
+#'                                    files were created. In this path are the files that are part of the shiny 
+#'                                    app.
 #' @examples
 #' \dontrun{
 #' connectionDetails <- createConnectionDetails(

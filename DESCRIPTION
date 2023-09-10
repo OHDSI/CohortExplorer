@@ -13,8 +13,7 @@ Description: This software tool is designed to extract data from a randomized su
     retrieves date-stamped, event-level records from one or more data sources that represent patient 
     data in the Observational Medical Outcomes Partnership (OMOP) data model format. This tool 
     features a user-friendly interface that enables users to efficiently explore the extracted 
-    profiles, thereby facilitating applications, such as reviewing structured profiles. The output 
-    of this R-package is a self-contained R shiny that contains person-level data for review.
+    profiles, thereby facilitating applications, such as reviewing structured profiles.
 Depends:
 	DatabaseConnector (>= 5.0.0),
 	R (>= 4.0.0)
