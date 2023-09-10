@@ -18,7 +18,7 @@ that are part of the Cohort Explorer Shiny app. This app may then be run to revi
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortExplorer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.16</span>
       </span>
     </div>
 
@@ -142,14 +142,15 @@ privileges where temp tables can be created.</p></dd>
 
 
 <dt>doNotExportCohortData</dt>
-<dd><p>(Optional) Do you want to not export cohort data? If set to true, parameters cohortDefinitionId,
-cohort, cohortDatabaseSchema, cohortName will be ignored. The persons entire
-observation period would be considered the cohort. Cohort Name will be 'Observation Period', cohort
-id will be set to 0.</p></dd>
+<dd><p>(Optional) Do you want to not export cohort data? If set to true, parameters
+cohortDefinitionId, cohort, cohortDatabaseSchema, cohortName will be ignored.
+The persons entire observation period would be considered the cohort. Cohort
+Name will be 'Observation Period', cohort id will be set to 0.</p></dd>
 
 
 <dt>sampleSize</dt>
-<dd><p>(Optional, default = 20) The number of persons to randomly sample. Ignored, if personId is given.</p></dd>
+<dd><p>(Optional, default = 20) The number of persons to randomly sample.
+Ignored, if personId is given.</p></dd>
 
 
 <dt>personIds</dt>
@@ -157,25 +158,37 @@ id will be set to 0.</p></dd>
 
 
 <dt>exportFolder</dt>
-<dd><p>The folder where the output will be exported to. If this folder
-does not exist it will be created.</p></dd>
+<dd><p>The folder where the output will be exported to. If this folder does
+not exist it will be created.</p></dd>
 
 
 <dt>databaseId</dt>
-<dd><p>A short string for identifying the database (e.g. 'Synpuf'). This will be displayed
-in shiny app to toggle between databases. Should not have space or underscore (_).</p></dd>
+<dd><p>A short string for identifying the database (e.g. 'Synpuf'). This will
+be displayed in shiny app to toggle between databases. Should not have
+space or underscore (_).</p></dd>
 
 
 <dt>shiftDates</dt>
-<dd><p>(Default = FALSE) Do you want to shift dates? This will help further de-identify data. The shift
-is the process of recalibrating dates such that all persons min(observation_period_start_date) is
-2000-01-01.</p></dd>
+<dd><p>(Default = FALSE) Do you want to shift dates? This will help further
+de-identify data. The shift is the process of re calibrating dates such
+that all persons mi (observation_period_start_date) is 2000-01-01.</p></dd>
 
 
 <dt>assignNewId</dt>
-<dd><p>(Default = FALSE) Do you want to assign a newId for persons. This will replace the personId in the source with a randomly assigned newId.</p></dd>
+<dd><p>(Default = FALSE) Do you want to assign a newId for persons. This will
+replace the personId in the source with a randomly assigned newId.</p></dd>
 
 </dl></div>
+    <div id="value">
+    <h2>Value</h2>
+    
+
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>                      Returns invisibly the full path of the export folder where the</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>                               files were created. In this path are the files that are part of the shiny</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>                               app.</span></code></pre><p></p></div>
+
+
+    </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
