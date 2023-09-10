@@ -17,7 +17,7 @@
 #' Create Cohort explorer shiny app with person level data
 #'
 #' @description
-#' Export person level data from omop cdm tables for eligible persons in the cohort. Creates a folder with files
+#' Export person level data from OMOP CDM tables for eligible persons in the cohort. Creates a folder with files
 #' that are part of the Cohort Explorer Shiny app. This app may then be run to review person level profiles.
 #'
 #' @template Connection

@@ -39,11 +39,11 @@ of the function, and closed when the function finishes.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{cdmDatabaseSchema}{Schema name where your omop cdm tables with person level data reside.
+\item{cdmDatabaseSchema}{Schema name where your OMOP CDM tables with person level data reside.
 Note that for SQL Server, this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{vocabularyDatabaseSchema}{Schema name where your omop vocabulary tables reside. It maybe the cdmDatabaseSchema.
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary tables reside. It maybe the cdmDatabaseSchema.
 Note that for SQL Server, this should include both the database and schema name, for example
 'scratch.dbo'.}
 
@@ -79,7 +79,7 @@ is the process of recalibrating dates such that all persons min(observation_peri
 \item{assignNewId}{(Default = FALSE) Do you want to assign a newId for persons. This will replace the personId in the source with a randomly assigned newId.}
 }
 \description{
-Export person level data from omop cdm tables for eligible persons in the cohort. Creates a folder with files
+Export person level data from OMOP CDM tables for eligible persons in the cohort. Creates a folder with files
 that are part of the Cohort Explorer Shiny app. This app may then be run to review person level profiles.
 }
 \examples{

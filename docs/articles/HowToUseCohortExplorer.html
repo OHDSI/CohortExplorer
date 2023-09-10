@@ -115,7 +115,7 @@ OHDSI</a>
 </li>
 </ul>
 <p>cohortDatabaseSchema: Schema name where your cohort tables reside.
-cdmDatabaseSchema: Schema name where your omop cdm tables with person
+cdmDatabaseSchema: Schema name where your OMOP CDM tables with person
 level data reside.</p>
 </div>
 </div>
@@ -139,8 +139,8 @@ is “D:/myProject”. The output will be created in that location.</p>
 
 createCohortExplorerApp &lt;- function(connectionDetails = connectionDetails,
                                     cohortDatabaseSchema = "cohort",
-                                    cdmDatabaseSchema = "cdm",
-                                    vocabularyDatabaseSchema = "cdm",
+                                    cdmDatabaseSchema = "CDM",
+                                    vocabularyDatabaseSchema = "CDM",
                                     cohortTable = "myCohortTable",
                                     cohortDefinitionId,
                                     cohortName = "personsWithSomeDisease",

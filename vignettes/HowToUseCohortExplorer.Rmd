@@ -26,7 +26,14 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-CohortExplorer is a R package that outputs a Shiny viewer embedded with person level data. This shiny app when run, shows the profiels of persons in the cohort.
+This software tool is designed to extract data from a randomized subset of individuals within a cohort and make it available for exploration in a 'Shiny' application environment. It retrieves date-stamped, event-level records from one or more data sources that represent patient data in the Observational Medical Outcomes Partnership (OMOP) data model format. This tool features a user-friendly interface that enables users to efficiently explore the extracted profiles, thereby facilitating applications, such as reviewing structured profiles. The output of this R-package is a self-contained R shiny that contains person-level data for review.
+
+
+## Warning:
+- Contains person level data. This package is not to be considered de-identified.
+- Please do not share the output with others as it may violate protected health information.
+- .RDS file in output contains PHI.
+
 
 ## Assumptions:
 - You have instantiated a valid cohort in a cohort table.
@@ -35,7 +42,7 @@ CohortExplorer is a R package that outputs a Shiny viewer embedded with person l
 - You have installed R and R-studio as described in the [Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi/SqlAndR.html)
 
 cohortDatabaseSchema: Schema name where your cohort tables reside.
-cdmDatabaseSchema: Schema name where your omop cdm tables with person level data reside.
+cdmDatabaseSchema: Schema name where your OMOP CDM tables with person level data reside.
 
 
 # Creating the shiny application
@@ -55,8 +62,8 @@ connectionDetails <-
 
 createCohortExplorerApp <- function(connectionDetails = connectionDetails,
                                     cohortDatabaseSchema = "cohort",
-                                    cdmDatabaseSchema = "cdm",
-                                    vocabularyDatabaseSchema = "cdm",
+                                    cdmDatabaseSchema = "CDM",
+                                    vocabularyDatabaseSchema = "CDM",
                                     cohortTable = "myCohortTable",
                                     cohortDefinitionId,
                                     cohortName = "personsWithSomeDisease",
