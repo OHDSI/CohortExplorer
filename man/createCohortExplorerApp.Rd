@@ -82,8 +82,8 @@ that all persons mi (observation_period_start_date) is 2000-01-01.}
 replace the personId in the source with a randomly assigned newId.}
 }
 \value{
-\if{html}{\out{<div class="sourceCode">}}\preformatted{                      Returns invisibly the full path of the export folder where the 
-                               files were created. In this path are the files that are part of the shiny 
+\if{html}{\out{<div class="sourceCode">}}\preformatted{                      Returns invisibly the full path of the export folder where the
+                               files were created. In this path are the files that are part of the shiny
                                app.
 }\if{html}{\out{</div>}}
 }

@@ -11,7 +11,7 @@ exportCohortExplorerAppFiles(exportFolder)
 does not exist it will be created.}
 }
 \value{
-\if{html}{\out{<div class="sourceCode">}}\preformatted{                      Nothing is returned to the environment. The function creates the 
+\if{html}{\out{<div class="sourceCode">}}\preformatted{                      Nothing is returned to the environment. The function creates the
                                required files for the shiny application in the export folder.
 }\if{html}{\out{</div>}}
 }
