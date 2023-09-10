@@ -4,9 +4,9 @@
 \name{CohortExplorer-package}
 \alias{CohortExplorer}
 \alias{CohortExplorer-package}
-\title{CohortExplorer: An R Package with a Shiny Viewer to Explore Profiles of Patients in a Cohort}
+\title{CohortExplorer: Explorer of Profiles of Patients in a Cohort}
 \description{
-An R package with a Shiny viewer to explore profiles of patients in a cohort.
+This software tool is designed to extract data from a randomized subset of individuals within a cohort and make it available for exploration in a 'Shiny' application environment. It retrieves date-stamped, event-level records from one or more data sources that represent patient data in the Observational Medical Outcomes Partnership (OMOP) data model format. This tool features a user-friendly interface that enables users to efficiently explore the extracted profiles, thereby facilitating applications, such as reviewing structured profiles.
 }
 \seealso{
 Useful links:

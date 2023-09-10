@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortExplorer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.16</span>
       </span>
     </div>
 
@@ -85,7 +85,7 @@
                         <h4 data-toc-skip class="author">Gowtham A.
 Rao</h4>
             
-            <h4 data-toc-skip class="date">2023-09-06</h4>
+            <h4 data-toc-skip class="date">2023-09-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortExplorer/blob/HEAD/vignettes/HowToUseCohortExplorer.Rmd" class="external-link"><code>vignettes/HowToUseCohortExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>HowToUseCohortExplorer.Rmd</code></div>
@@ -97,9 +97,27 @@ Rao</h4>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>CohortExplorer is a R package that outputs a Shiny viewer embedded
-with person level data. This shiny app when run, shows the profiels of
-persons in the cohort.</p>
+<p>This software tool is designed to extract data from a randomized
+subset of individuals within a cohort and make it available for
+exploration in a ‘Shiny’ application environment. It retrieves
+date-stamped, event-level records from one or more data sources that
+represent patient data in the Observational Medical Outcomes Partnership
+(OMOP) data model format. This tool features a user-friendly interface
+that enables users to efficiently explore the extracted profiles,
+thereby facilitating applications, such as reviewing structured
+profiles. The output of this R-package is a self-contained R shiny that
+contains person-level data for review.</p>
+<div class="section level3">
+<h3 id="warning">Warning:<a class="anchor" aria-label="anchor" href="#warning"></a>
+</h3>
+<ul>
+<li>Contains person level data. This package is not to be considered
+de-identified.</li>
+<li>Please do not share the output with others as it may violate
+protected health information.</li>
+<li>.RDS file in output contains PHI.</li>
+</ul>
+</div>
 <div class="section level3">
 <h3 id="assumptions">Assumptions:<a class="anchor" aria-label="anchor" href="#assumptions"></a>
 </h3>
@@ -115,7 +133,7 @@ OHDSI</a>
 </li>
 </ul>
 <p>cohortDatabaseSchema: Schema name where your cohort tables reside.
-cdmDatabaseSchema: Schema name where your omop cdm tables with person
+cdmDatabaseSchema: Schema name where your OMOP CDM tables with person
 level data reside.</p>
 </div>
 </div>
@@ -139,8 +157,8 @@ is “D:/myProject”. The output will be created in that location.</p>
 
 createCohortExplorerApp &lt;- function(connectionDetails = connectionDetails,
                                     cohortDatabaseSchema = "cohort",
-                                    cdmDatabaseSchema = "cdm",
-                                    vocabularyDatabaseSchema = "cdm",
+                                    cdmDatabaseSchema = "CDM",
+                                    vocabularyDatabaseSchema = "CDM",
                                     cohortTable = "myCohortTable",
                                     cohortDefinitionId,
                                     cohortName = "personsWithSomeDisease",

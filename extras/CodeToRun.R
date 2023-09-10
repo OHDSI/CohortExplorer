@@ -18,8 +18,8 @@ connectionDetails <-
 CohortExplorer::createCohortExplorerApp(
   connectionDetails = connectionDetails,
   cohortDatabaseSchema = "cohort",
-  cdmDatabaseSchema = "cdm",
-  vocabularyDatabaseSchema = "cdm",
+  cdmDatabaseSchema = "CDM",
+  vocabularyDatabaseSchema = "CDM",
   cohortTable = "cohort",
   cohortDefinitionId = 1234,
   exportFolder = "export",

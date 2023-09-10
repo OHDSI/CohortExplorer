@@ -1,14 +1,19 @@
 Package: CohortExplorer
 Type: Package
-Title: An R Package with a Shiny Viewer to Explore Profiles of Patients in a Cohort
-Version: 0.0.15
-Date: 2023-09-06
+Title: Explorer of Profiles of Patients in a Cohort
+Version: 0.0.16
+Date: 2023-09-10
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
 Maintainer: Gowtham Rao <rao@ohdsi.org>
-Description: An R package with a Shiny viewer to explore profiles of patients in a cohort.
+Description: This software tool is designed to extract data from a randomized subset of individuals 
+    within a cohort and make it available for exploration in a 'Shiny' application environment. It 
+    retrieves date-stamped, event-level records from one or more data sources that represent patient 
+    data in the Observational Medical Outcomes Partnership (OMOP) data model format. This tool 
+    features a user-friendly interface that enables users to efficiently explore the extracted 
+    profiles, thereby facilitating applications, such as reviewing structured profiles.
 Depends:
 	DatabaseConnector (>= 5.0.0),
 	R (>= 4.0.0)

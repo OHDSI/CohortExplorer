@@ -1,5 +1,5 @@
 test_that("Create app with cohort data in temp table", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   library(dplyr)
 
@@ -58,7 +58,7 @@ test_that("Create app with cohort data in temp table", {
 
 
 test_that("Error because database has space", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   outputDir <- tempfile()
 
@@ -84,7 +84,7 @@ test_that("Error because database has space", {
 })
 
 test_that("no connection or connection details", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   outputDir <- tempfile()
 
@@ -108,7 +108,7 @@ test_that("no connection or connection details", {
 })
 
 test_that("Cohort has no data", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   library(dplyr)
 
@@ -158,7 +158,7 @@ test_that("Cohort has no data", {
 
 
 test_that("create rand 100 in cohort", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   library(dplyr)
 
@@ -222,7 +222,7 @@ test_that("create rand 100 in cohort", {
 
 
 test_that("create rand 100 in cohort with date shifting", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   library(dplyr)
 
@@ -288,7 +288,7 @@ test_that("create rand 100 in cohort with date shifting", {
 
 
 test_that("do Not Export CohortData", {
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(skipCdmTests, "CDM settings not configured")
 
   library(dplyr)
 

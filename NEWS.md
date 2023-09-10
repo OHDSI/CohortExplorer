@@ -1,3 +1,7 @@
+CohortExplorer 0.0.16
+======================
+Changes based on CRAN reviewer feedback.
+
 CohortExplorer 0.0.15
 ======================
 Destination CRAN
