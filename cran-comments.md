@@ -1,3 +1,4 @@
+Changes to title, description and .Rd files made by CRAN review.
 This is new release.
 
 ---
