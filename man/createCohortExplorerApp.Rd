@@ -71,7 +71,7 @@ Ignored, if personId is given.}
 not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf'). This will
-be displayed in shiny app to toggle between databases. Should not have
+be displayed in 'shiny' app to toggle between databases. Should not have
 space or underscore (_).}
 
 \item{shiftDates}{(Default = FALSE) Do you want to shift dates? This will help further
@@ -83,13 +83,13 @@ replace the personId in the source with a randomly assigned newId.}
 }
 \value{
 \if{html}{\out{<div class="sourceCode">}}\preformatted{                      Returns invisibly the full path of the export folder where the
-                               files were created. In this path are the files that are part of the shiny
+                               files were created. In this path are the files that are part of the 'shiny'
                                app.
 }\if{html}{\out{</div>}}
 }
 \description{
 Export person level data from OMOP CDM tables for eligible persons in the cohort. Creates a folder with files
-that are part of the Cohort Explorer Shiny app. This app may then be run to review person level profiles.
+that are part of the Cohort Explorer 'shiny' app. This app may then be run to review person level profiles.
 }
 \examples{
 \dontrun{

@@ -18,7 +18,7 @@
 #'
 #' @description
 #' Export person level data from OMOP CDM tables for eligible persons in the cohort. Creates a folder with files
-#' that are part of the Cohort Explorer Shiny app. This app may then be run to review person level profiles.
+#' that are part of the Cohort Explorer 'shiny' app. This app may then be run to review person level profiles.
 #'
 #' @template Connection
 #'
@@ -48,7 +48,7 @@
 #' @param exportFolder                The folder where the output will be exported to. If this folder does
 #'                                    not exist it will be created.
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf'). This will
-#'                                    be displayed in shiny app to toggle between databases. Should not have
+#'                                    be displayed in 'shiny' app to toggle between databases. Should not have
 #'                                    space or underscore (_).
 #' @param shiftDates                  (Default = FALSE) Do you want to shift dates? This will help further
 #'                                    de-identify data. The shift is the process of re calibrating dates such
@@ -56,7 +56,7 @@
 #' @param assignNewId                 (Default = FALSE) Do you want to assign a newId for persons. This will
 #'                                    replace the personId in the source with a randomly assigned newId.
 #' @returns                           Returns invisibly the full path of the export folder where the
-#'                                    files were created. In this path are the files that are part of the shiny
+#'                                    files were created. In this path are the files that are part of the 'shiny'
 #'                                    app.
 #' @examples
 #' \dontrun{
@@ -1167,7 +1167,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
   message(
     sprintf(
-      "The CohortExplorer Shiny app has been created at '%s'.
+      "The CohortExplorer shiny app has been created at '%s'.
                      Please view the README file in that folder for instructions
                      on how to run.",
       exportFolder
