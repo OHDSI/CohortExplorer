@@ -13,7 +13,7 @@
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Explorer of Profiles of Patients in a Cohort">
 <meta property="og:description" content="This software tool is designed to extract data from a randomized subset of individuals 
-    within a cohort and make it available for exploration in a Shiny application environment. It 
+    within a cohort and make it available for exploration in a shiny application environment. It 
     retrieves date-stamped, event-level records from one or more data sources that represent patient 
     data in the Observational Medical Outcomes Partnership (OMOP) data model format. This tool 
     features a user-friendly interface that enables users to efficiently explore the extracted 
@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">CohortExplorer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.16</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.17</span>
       </span>
     </div>
 
@@ -121,18 +121,18 @@
 <h1 id="screenshot">Screenshot<a class="anchor" aria-label="anchor" href="#screenshot"></a>
 </h1>
 <div class="float">
-<img src="https://github.com/OHDSI/CohortExplorer/raw/main/extras/Screenshot.png" title="CohortExplorer Shiny app" alt="CohortExplorer Shiny app screenshot"><div class="figcaption">CohortExplorer Shiny app screenshot</div>
+<img src="https://github.com/OHDSI/CohortExplorer/raw/main/extras/Screenshot.png" title="CohortExplorer Shiny app" alt="CohortExplorer shiny app screenshot"><div class="figcaption">CohortExplorer shiny app screenshot</div>
 </div>
 </div>
 <div class="section level1">
 <h1 id="how-to-use">How to use<a class="anchor" aria-label="anchor" href="#how-to-use"></a>
 </h1>
 <ul>
-<li>The output of createCohortExplorerApp is a Shiny App with person level data in .rds. It is in the output folder.</li>
+<li>The output of createCohortExplorerApp is a shiny App with person level data in .rds. It is in the output folder.</li>
 <li>Go the output location in your file browser (e.g. windows file explorer in a Windows computer) and start ‘CohortExplorer.Rproj’.</li>
 <li>Optionally, in R console now run renv::restore() to enable renv. This will download all required packages and dependencies and set up the run environment.</li>
 <li>Next call to shiny::runApp()</li>
-<li>If you want to run this Shiny App on a remote Shiny Server, you may copy all the files in the output to the remote shiny servers new app file folder. run renv::restore() in the shiny server and restart app.</li>
+<li>If you want to run this shiny App on a remote Shiny Server, you may copy all the files in the output to the remote shiny servers new app file folder. run renv::restore() in the shiny server and restart app.</li>
 </ul>
 </div>
 <div class="section level1">
