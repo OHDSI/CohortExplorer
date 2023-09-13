@@ -2,9 +2,11 @@ CohortExplorer
 ==============
 
 [![Build Status](https://github.com/OHDSI/CohortExplorer/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/CohortExplorer/actions?query=workflow%3AR-CMD-check)
-[![codecov.io](https://codecov.io/github/OHDSI/CohortExplorer/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/CohortExplorer?branch=main)
+[![codecov.io](https://codecov.io/github/OHDSI/CohortExplorer/coverage.svg?branch=main)](https://app.codecov.io/github/OHDSI/CohortExplorer?branch=main)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/CohortExplorer)](https://cran.r-project.org/package=CohortExplorer)
+[![CRAN_Status_Badge](http://cranlogs.r-pkg.org/badges/CohortExplorer)](https://cran.r-project.org/package=CohortExplorer)
 
-CohortExplorer is part of [HADES](https://ohdsi.github.io/Hades).
+CohortExplorer is part of [HADES](https://ohdsi.github.io/Hades/).
 
 Introduction
 ============
