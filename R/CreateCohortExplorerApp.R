@@ -55,6 +55,10 @@
 #'                                    that all persons mi (observation_period_start_date) is 2000-01-01.
 #' @param assignNewId                 (Default = FALSE) Do you want to assign a newId for persons. This will
 #'                                    replace the personId in the source with a randomly assigned newId.
+#' @param featureCohortDatabaseSchema The CohortDatabaseSchema where the feature cohort table exits.
+#' @param featureCohortTable          The Cohort table where feature cohorts are instantiated.
+#' @param featureCohortDefinitionSet  The CohortDefinitionSet object corresponding to the cohorts to 
+#'                                    be used as features.
 #' @returns                           Returns invisibly the full path of the export folder where the
 #'                                    files were created. In this path are the files that are part of the 'shiny'
 #'                                    app.
@@ -87,6 +91,9 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                                     doNotExportCohortData = FALSE,
                                     sampleSize = 25,
                                     personIds = NULL,
+                                    featureCohortDatabaseSchema = NULL,
+                                    featureCohortTable = NULL,
+                                    featureCohortDefinitionSet = NULL,
                                     exportFolder,
                                     databaseId,
                                     shiftDates = FALSE,
@@ -195,6 +202,23 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     access = "x",
     add = errorMessage
   )
+  
+  useCohortDomain <- FALSE
+  if (any(
+    !is.null(featureCohortDefinitionSet),
+    !is.null(featureCohortTable),
+    !is.null(featureCohortDatabaseSchema)
+  )) {
+    checkmate::assertTRUE(x = !checkmate::allMissing(
+      x = c(
+        featureCohortDefinitionSet,
+        featureCohortTable,
+        featureCohortDatabaseSchema
+      )
+    ), add = errorMessage)
+    checkmate::reportAssertions(collection = errorMessage)
+    useCohortDomain <- TRUE
+  }
 
   checkmate::reportAssertions(collection = errorMessage)
 
@@ -707,7 +731,30 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   ) %>%
     dplyr::tibble() %>%
     dplyr::mutate(endDate = .data$startDate)
-
+  
+  featureCohortData <- NULL
+  if (useCohortDomain) {
+    writeLines("Getting cohort table.")
+    featureCohortData <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT f.subject_id person_id,
+                  pf.new_id,
+                  f.cohort_start_date AS start_date,
+                  f.cohort_end_date AS end_date,
+                  1 records
+            FROM @feature_cohort_database_schema.@feature_cohort_table f
+            INNER JOIN #persons_filter pf
+            ON f.subject_id = pf.person_id
+            WHERE cohort_definition_id IN (@feature_cohort_definition_id);",
+      feature_cohort_database_schema = featureCohortDatabaseSchema,
+      feature_cohort_table = featureCohortTable,
+      feature_cohort_definition_id = featureCohortDefinitionSet$cohortId,
+      tempEmulationSchema = tempEmulationSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+      dplyr::tibble() %>%
+      dplyr::mutate(endDate = .data$startDate)
+  }
 
   writeLines("Getting concept id.")
   DatabaseConnector::renderTranslateExecuteSql(
@@ -1128,6 +1175,11 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     data = measurement,
     useNewId = assignNewId
   )
+  
+  if (!is.null(featureCohortData)) {
+    featureCohortData <- replaceId(data = featureCohortData,
+                                   useNewId = assignNewId)
+  }
 
   results <- list(
     cohort = cohort,
@@ -1144,6 +1196,8 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     measurement = measurement,
     conceptId = conceptIds,
     cohortName = cohortName,
+    featureCohortData = featureCohortData,
+    featureCohortDefinitionSet = featureCohortDefinitionSet,
     assignNewId = assignNewId,
     shiftDates = shiftDates,
     sampleSize = sampleSize,
