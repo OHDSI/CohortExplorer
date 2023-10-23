@@ -2,6 +2,7 @@ CohortExplorer 0.1.0
 ======================
 New functionality that adds a 'Feature Cohort' domain based on instantiated cohorts
 Removed dependency on SqlRender. [Thank you @schuemie](https://github.com/OHDSI/CohortExplorer/commit/0f3d68fcb958e511cbb7910c2ca26b27d3b5d364)
+Removed dependency on clock.
 
 CohortExplorer 0.0.17
 ======================

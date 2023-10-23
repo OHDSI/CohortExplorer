@@ -447,7 +447,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       cohort %>%
         dplyr::group_by(.data$subjectId) %>%
         dplyr::summarise(
-          yearOfCohort = min(clock::get_year(.data$startDate)),
+          yearOfCohort = min(extractYear(.data$startDate)),
           .groups = "keep"
         ) %>%
         dplyr::ungroup() %>%
@@ -1089,7 +1089,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
     if ("startDate" %in% colnames(data)) {
       data <- data %>%
-        dplyr::mutate(startDate = clock::add_days(
+        dplyr::mutate(startDate = addDays(
           x = as.Date(originDate),
           n = as.integer(
             difftime(
@@ -1103,7 +1103,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
 
     if ("endDate" %in% colnames(data)) {
       data <- data %>%
-        dplyr::mutate(endDate = clock::add_days(
+        dplyr::mutate(endDate = addDays(
           x = as.Date(originDate),
           n = as.integer(
             difftime(

@@ -231,22 +231,22 @@ shinyServer(function(input, output, session) {
           dplyr::pull(startDate)
         
         data <- data %>%
-          dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
-                                                    n = as.integer(
-                                                      difftime(
-                                                        time1 = startDate,
-                                                        time2 = earliestDate,
-                                                        units = "days"
-                                                      )
-                                                    ))) %>%
-          dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
-                                                  n = as.integer(
-                                                    difftime(
-                                                      time1 = endDate,
-                                                      time2 = earliestDate,
-                                                      units = "days"
-                                                    )
-                                                  )))
+          dplyr::mutate(startDate = addDays(x = as.Date(originDate),
+                                            n = as.integer(
+                                              difftime(
+                                                time1 = startDate,
+                                                time2 = earliestDate,
+                                                units = "days"
+                                              )
+                                            ))) %>%
+          dplyr::mutate(endDate = addDays(x = as.Date(originDate),
+                                          n = as.integer(
+                                            difftime(
+                                              time1 = endDate,
+                                              time2 = earliestDate,
+                                              units = "days"
+                                            )
+                                          )))
       }
       return(data)
     }
