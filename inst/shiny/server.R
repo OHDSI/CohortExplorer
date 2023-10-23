@@ -108,7 +108,7 @@ shinyServer(function(input, output, session) {
       
       for (i in (1:length(selectedCdmTables))) {
         domainTableData <-
-          dataFromRds()[[SqlRender::snakeCaseToCamelCase(selectedCdmTables[[i]])]] %>%
+          dataFromRds()[[snakeCaseToCamelCase(selectedCdmTables[[i]])]] %>%
           dplyr::filter(personId == subjectIds()[subject$index]) %>%
           dplyr::mutate(cdmTable = selectedCdmTables[[i]])
         
@@ -319,7 +319,7 @@ shinyServer(function(input, output, session) {
                       cdmTable)
     
     colnames(data) <-
-      SqlRender::camelCaseToTitleCase(colnames(data))
+      camelCaseToTitleCase(colnames(data))
     
     dataTable <- reactable::reactable(
       data = data,

@@ -28,8 +28,8 @@ column(
   checkboxGroupInput(
     "cdmTables",
     label = "CDM Table",
-    choices = SqlRender::camelCaseToTitleCase(tables),
-    selected = SqlRender::camelCaseToTitleCase(
+    choices = camelCaseToTitleCase(tables),
+    selected = camelCaseToTitleCase(
       c(
         "visitOccurrence",
         "conditionOccurrence",
