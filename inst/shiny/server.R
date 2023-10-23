@@ -379,7 +379,6 @@ shinyServer(function(input, output, session) {
     if (nrow(events) == 0) {
       return(NULL)
     } else {
-      browser()
       colors <- colorScale()
       cdmTables <- events %>% 
         dplyr::group_by(cdmTable) %>% 
