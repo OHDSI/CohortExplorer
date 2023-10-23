@@ -332,13 +332,13 @@ test_that("do Not Export CohortData", {
 
 test_that("use cohort features", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   # create a cohort with 1000 persons
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
@@ -374,7 +374,7 @@ test_that("use cohort features", {
             2 cohort_definition_id,
             cohort_start_date,
             cohort_end_date
-    FROM @cohort_database_schema.@cohort_table 
+    FROM @cohort_database_schema.@cohort_table
     WHERE cohort_definition_id = 1;
 
     INSERT INTO @cohort_database_schema.@cohort_table
@@ -384,10 +384,12 @@ test_that("use cohort features", {
             cohort_end_date
     FROM @cohort_database_schema.@cohort_table
     WHERE cohort_definition_id = 1;"
-  
-  featureCohortDefinitionSet <- dplyr::tibble(cohortId = 2,
-                                              cohortName = "same cohort")
-  
+
+  featureCohortDefinitionSet <- dplyr::tibble(
+    cohortId = 2,
+    cohortName = "same cohort"
+  )
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = createCohortTableSql,
@@ -396,12 +398,12 @@ test_that("use cohort features", {
     reportOverallTime = FALSE,
     cohort_database_schema = cohortDatabaseSchema,
     cdm_database_schema = cdmDatabaseSchema,
-    cohort_table = cohortTable, 
+    cohort_table = cohortTable,
     tempEmulationSchema = tempEmulationSchema
   )
-  
+
   outputDir <- tempfile()
-  
+
   outputPath <- createCohortExplorerApp(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -412,10 +414,10 @@ test_that("use cohort features", {
     exportFolder = outputDir,
     featureCohortDatabaseSchema = cohortDatabaseSchema,
     featureCohortDefinitionSet = featureCohortDefinitionSet,
-    featureCohortTable = cohortTable, 
+    featureCohortTable = cohortTable,
     cohortDefinitionId = 1
   )
-  
+
   testthat::expect_true(file.exists(
     file.path(
       outputPath,
@@ -423,7 +425,7 @@ test_that("use cohort features", {
       "CohortExplorer_1_databaseData.rds"
     )
   ))
-  
+
   testthat::expect_error(
     createCohortExplorerApp(
       connection = connection,

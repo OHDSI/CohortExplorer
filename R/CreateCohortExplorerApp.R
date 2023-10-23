@@ -57,7 +57,7 @@
 #'                                    replace the personId in the source with a randomly assigned newId.
 #' @param featureCohortDatabaseSchema The CohortDatabaseSchema where the feature cohort table exits.
 #' @param featureCohortTable          The Cohort table where feature cohorts are instantiated.
-#' @param featureCohortDefinitionSet  The CohortDefinitionSet object corresponding to the cohorts to 
+#' @param featureCohortDefinitionSet  The CohortDefinitionSet object corresponding to the cohorts to
 #'                                    be used as features.
 #' @returns                           Returns invisibly the full path of the export folder where the
 #'                                    files were created. In this path are the files that are part of the 'shiny'
@@ -202,7 +202,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     access = "x",
     add = errorMessage
   )
-  
+
   useCohortDomain <- FALSE
   if (any(
     !is.null(featureCohortDefinitionSet),
@@ -731,7 +731,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   ) %>%
     dplyr::tibble() %>%
     dplyr::mutate(endDate = .data$startDate)
-  
+
   featureCohortData <- NULL
   if (useCohortDomain) {
     writeLines("Getting feature cohort table.")
@@ -1174,10 +1174,12 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     data = measurement,
     useNewId = assignNewId
   )
-  
+
   if (!is.null(featureCohortData)) {
-    featureCohortData <- replaceId(data = featureCohortData,
-                                   useNewId = assignNewId)
+    featureCohortData <- replaceId(
+      data = featureCohortData,
+      useNewId = assignNewId
+    )
   }
 
   results <- list(
