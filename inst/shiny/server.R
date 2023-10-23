@@ -151,8 +151,12 @@ shinyServer(function(input, output, session) {
           dplyr::ungroup()
       } else {
         data <- data %>%
-          dplyr::filter(conceptId >= 0) %>% 
-          dplyr::select(-sourceConceptId) %>%
+          dplyr::filter(conceptId >= 0) 
+        if ("sourceConceptId" %in% colnames(data)) {
+          data <- data %>% 
+            dplyr::select(-sourceConceptId)
+        }
+        data <- data %>%
           dplyr::group_by(personId,
                           startDate,
                           endDate,
@@ -172,7 +176,8 @@ shinyServer(function(input, output, session) {
       if (exists("cohortDefinitionSet")) {
         featureCohortData <- data |>
           dplyr::filter(cdmTable == "feature_cohort_data") |>
-          dplyr::inner_join(cohortDefinitionSet) |>
+          dplyr::inner_join(cohortDefinitionSet,
+                            by = "conceptId") |>
           dplyr::mutate(vocabularyId = "Cohort",
                         conceptCode = as.character(conceptId),
                         typeConceptId = 0,
