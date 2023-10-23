@@ -1,3 +1,11 @@
+CohortExplorer 0.1.0
+======================
+Adds a new 'Cohort' domain based on instantiated cohorts
+
+CohortExplorer 0.0.17
+======================
+First CRAN release
+
 CohortExplorer 0.0.16
 ======================
 Changes based on CRAN reviewer feedback.

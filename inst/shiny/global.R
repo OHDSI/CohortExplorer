@@ -44,8 +44,8 @@ listOfFiles <- listOfFiles %>%
 initialSelectedCohortId <- listOfFiles[1, ]$cohortId
 initialSelectedDatabaseId <- listOfFiles[1, ]$databaseId
 
-
 tables <- c(
+  "featureCohortData",
   "conditionEra",
   "conditionOccurrence",
   "drugEra",

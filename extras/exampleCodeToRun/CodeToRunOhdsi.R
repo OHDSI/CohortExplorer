@@ -1,46 +1,32 @@
 # SETUP --------------------------------------------------------------------
 library(magrittr)
+
 # Pre-requisites ----
 # remotes::install_github('OHDSI/CohortExplorer')
 
-cohortDefinitionIds <- c(256)
-
-ROhdsiWebApi::authorizeWebApi(
-  baseUrl = Sys.getenv("ohdsiAtlasPhenotype"),
-  authMethod = "db",
-  webApiUsername = keyring::key_get("ohdsiAtlasPhenotypeUser"),
-  webApiPassword = keyring::key_get("ohdsiAtlasPhenotypePassword")
-)
+cohortDefinitionIds <- c(19, 200)
 
 cohortDefinitionSet <-
-  ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = Sys.getenv("ohdsiAtlasPhenotype")) %>%
-  dplyr::filter(id %in% c(cohortDefinitionIds)) %>%
-  dplyr::select(id, name) %>%
-  dplyr::rename(cohortId = id, cohortName = name) %>%
-  dplyr::arrange(cohortId)
+  PhenotypeLibrary::getPlCohortDefinitionSet(cohortIds = PhenotypeLibrary::getPhenotypeLog()$cohortId)
 
-exportFolder <- "d:/temp/CohortExplorer"
-projectCode <- "pl_"
-
-
-######################################################################################
-############## databaseIds to run cohort diagnostics on that source  #################
-######################################################################################
+exportFolder <-
+  "d:/studyResults/CohortExplorer/phenotypeLibraryRealData"
 
 databaseIds <-
   c(
     'truven_ccae',
-    'truven_mdcd',
-    'cprd',
-    'jmdc',
-    'optum_extended_dod',
-    'optum_ehr',
-    'truven_mdcr',
-    'ims_australia_lpd',
-    'ims_germany',
-    'ims_france',
-    'iqvia_amb_emr',
-    'iqvia_pharmetrics_plus'
+    'truven_mdcd'
+    # ,
+    # 'cprd',
+    # 'jmdc',
+    # 'optum_extended_dod',
+    # 'optum_ehr',
+    # 'truven_mdcr',
+    # 'ims_australia_lpd',
+    # 'ims_germany',
+    # 'ims_france',
+    # 'iqvia_amb_emr',
+    # 'iqvia_pharmetrics_plus'
   )
 
 for (i in (1:length(databaseIds))) {
@@ -58,27 +44,25 @@ for (i in (1:length(databaseIds))) {
         port = cdmSource$port
       )
     
-    cohortTableName <- paste0(stringr::str_squish(projectCode),
-                              stringr::str_squish(cdmSource$sourceKey))
+    cohortTableName <- paste0(stringr::str_squish("pl_"),
+                              stringr::str_squish(x$sourceKey))
     
     # EXECUTE --------------------------------------------------------------------
-    tryCatch(
-      expr = {
-        CohortExplorer::createCohortExplorerApp(
-          connectionDetails = connectionDetails,
-          cohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
-          cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
-          vocabularyDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
-          cohortTable = cohortTableName,
-          cohortDefinitionId = cohortDefinitionSet[j, ]$cohortId,
-          cohortName = cohortDefinitionSet[j, ]$cohortName,
-          exportFolder = exportFolder,
-          databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
-          shiftDate = TRUE
-        )
-      },
-      error = function(e) {
-      }
+    
+    CohortExplorer::createCohortExplorerApp(
+      connectionDetails = connectionDetails,
+      cohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
+      cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
+      vocabularyDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
+      cohortTable = cohortTableName,
+      cohortDefinitionId = cohortDefinitionSet[j, ]$cohortId,
+      cohortName = cohortDefinitionSet[j, ]$cohortName,
+      exportFolder = exportFolder,
+      databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
+      shiftDate = TRUE,
+      featureCohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
+      featureCohortTable = cohortTableName,
+      featureCohortDefinitionSet = cohortDefinitionSet
     )
   }
 }

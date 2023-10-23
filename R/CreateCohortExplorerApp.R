@@ -734,26 +734,25 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
   
   featureCohortData <- NULL
   if (useCohortDomain) {
-    writeLines("Getting cohort table.")
+    writeLines("Getting feature cohort table.")
     featureCohortData <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = "SELECT f.subject_id person_id,
                   pf.new_id,
+                  f.cohort_definition_id concept_id,
                   f.cohort_start_date AS start_date,
-                  f.cohort_end_date AS end_date,
-                  1 records
+                  f.cohort_end_date AS end_date
             FROM @feature_cohort_database_schema.@feature_cohort_table f
             INNER JOIN #persons_filter pf
             ON f.subject_id = pf.person_id
-            WHERE cohort_definition_id IN (@feature_cohort_definition_id);",
+            WHERE f.cohort_definition_id IN (@feature_cohort_definition_id);",
       feature_cohort_database_schema = featureCohortDatabaseSchema,
       feature_cohort_table = featureCohortTable,
       feature_cohort_definition_id = featureCohortDefinitionSet$cohortId,
       tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
-      dplyr::tibble() %>%
-      dplyr::mutate(endDate = .data$startDate)
+      dplyr::tibble()
   }
 
   writeLines("Getting concept id.")

@@ -1,8 +1,8 @@
 Package: CohortExplorer
 Type: Package
 Title: Explorer of Profiles of Patients in a Cohort
-Version: 0.0.17
-Date: 2023-09-11
+Version: 0.1.0
+Date: 2023-10-22
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
