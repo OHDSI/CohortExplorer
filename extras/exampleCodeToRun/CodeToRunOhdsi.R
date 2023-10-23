@@ -45,7 +45,7 @@ for (i in (1:length(databaseIds))) {
       )
     
     cohortTableName <- paste0(stringr::str_squish("pl_"),
-                              stringr::str_squish(x$sourceKey))
+                              stringr::str_squish(cdmSource$sourceKey))
     
     # EXECUTE --------------------------------------------------------------------
     
@@ -55,11 +55,13 @@ for (i in (1:length(databaseIds))) {
       cdmDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
       vocabularyDatabaseSchema = as.character(cdmSource$cdmDatabaseSchemaFinal),
       cohortTable = cohortTableName,
-      cohortDefinitionId = cohortDefinitionSet[j, ]$cohortId,
-      cohortName = cohortDefinitionSet[j, ]$cohortName,
+      cohortDefinitionId = cohortDefinitionIds[[j]],
+      cohortName = cohortDefinitionSet |> 
+        dplyr::filter(cohortId == cohortDefinitionIds[[j]]) |> 
+        dplyr::pull(cohortName),
       exportFolder = exportFolder,
       databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
-      shiftDate = TRUE,
+      shiftDate = FALSE,
       featureCohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
       featureCohortTable = cohortTableName,
       featureCohortDefinitionSet = cohortDefinitionSet

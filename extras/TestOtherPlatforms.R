@@ -39,7 +39,7 @@ databaseId <- "Synpuf"
 #   group_by(cohort_definition_id) %>%
 #   summarise(cohort_count = n()) %>%
 #   collect() %>%
-#   SqlRender::snakeCaseToCamelCaseNames()
+#   snakeCaseToCamelCaseNames()
 # DatabaseConnector::disconnect(connection)
 
 CohortExplorer::createCohortExplorerApp(

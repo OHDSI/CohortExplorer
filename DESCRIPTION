@@ -27,7 +27,6 @@ Imports:
   stats
 Suggests:
   rmarkdown,
-  SqlRender,
   testthat,
   knitr,
   withr
