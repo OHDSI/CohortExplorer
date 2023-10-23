@@ -31,6 +31,13 @@ databaseIds <-
 
 for (i in (1:length(databaseIds))) {
   for (j in (1:length(cohortDefinitionIds))) {
+    
+    if (i == 2) {
+      shiftDates = TRUE
+    } else {
+      shiftDates = FALSE
+    }
+    
     cdmSource <- cdmSources %>%
       dplyr::filter(.data$sequence == 1) %>%
       dplyr::filter(database == databaseIds[[i]])
@@ -61,7 +68,7 @@ for (i in (1:length(databaseIds))) {
         dplyr::pull(cohortName),
       exportFolder = exportFolder,
       databaseId = SqlRender::snakeCaseToCamelCase(cdmSource$database),
-      shiftDate = FALSE,
+      shiftDate = shiftDates,
       featureCohortDatabaseSchema = as.character(cdmSource$cohortDatabaseSchemaFinal),
       featureCohortTable = cohortTableName,
       featureCohortDefinitionSet = cohortDefinitionSet
