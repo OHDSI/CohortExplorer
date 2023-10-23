@@ -27,9 +27,9 @@ column(
   actionButton("nextButton", ">"),
   checkboxGroupInput(
     "cdmTables",
-    label = "CDM Table",
-    choices = SqlRender::camelCaseToTitleCase(tables),
-    selected = SqlRender::camelCaseToTitleCase(
+    label = "Domains",
+    choices = camelCaseToTitleCase(tables),
+    selected = camelCaseToTitleCase(
       c(
         "visitOccurrence",
         "conditionOccurrence",

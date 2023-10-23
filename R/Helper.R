@@ -25,3 +25,18 @@ replaceId <- function(data, useNewId = TRUE) {
   }
   return(data)
 }
+
+addDays <- function(x, n) {
+  # Ensure that x is of class Date
+  xAsDate <- as.Date(x)
+
+  # Add n days to xAsDate
+  newDate <- xAsDate + as.integer(n)
+
+  return(newDate)
+}
+
+
+extractYear <- function(dateColumn) {
+  as.numeric(format(dateColumn, "%Y"))
+}

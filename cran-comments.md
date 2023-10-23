@@ -1,3 +1,8 @@
+## Changes version 0.1.0
+Removed dependency on SqlRender
+Added new functionality
+
+## Changes version 0.0.17
 Changes to title, description and .Rd files made by CRAN review.
 This is new release.
 

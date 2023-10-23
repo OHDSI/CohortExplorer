@@ -17,6 +17,9 @@ createCohortExplorerApp(
   doNotExportCohortData = FALSE,
   sampleSize = 25,
   personIds = NULL,
+  featureCohortDatabaseSchema = NULL,
+  featureCohortTable = NULL,
+  featureCohortDefinitionSet = NULL,
   exportFolder,
   databaseId,
   shiftDates = FALSE,
@@ -66,6 +69,13 @@ Name will be 'Observation Period', cohort id will be set to 0.}
 Ignored, if personId is given.}
 
 \item{personIds}{(Optional) An array of personId's to look for in Cohort table and CDM.}
+
+\item{featureCohortDatabaseSchema}{The CohortDatabaseSchema where the feature cohort table exits.}
+
+\item{featureCohortTable}{The Cohort table where feature cohorts are instantiated.}
+
+\item{featureCohortDefinitionSet}{The CohortDefinitionSet object corresponding to the cohorts to
+be used as features.}
 
 \item{exportFolder}{The folder where the output will be exported to. If this folder does
 not exist it will be created.}

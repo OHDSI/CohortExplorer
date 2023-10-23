@@ -18,7 +18,7 @@ that are part of the Cohort Explorer 'shiny' app. This app may then be run to re
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortExplorer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.17</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -81,6 +81,9 @@ that are part of the Cohort Explorer 'shiny' app. This app may then be run to re
 <span>  doNotExportCohortData <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sampleSize <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  personIds <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  featureCohortDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  featureCohortTable <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  featureCohortDefinitionSet <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">exportFolder</span>,</span>
 <span>  <span class="va">databaseId</span>,</span>
 <span>  shiftDates <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -155,6 +158,19 @@ Ignored, if personId is given.</p></dd>
 
 <dt>personIds</dt>
 <dd><p>(Optional) An array of personId's to look for in Cohort table and CDM.</p></dd>
+
+
+<dt>featureCohortDatabaseSchema</dt>
+<dd><p>The CohortDatabaseSchema where the feature cohort table exits.</p></dd>
+
+
+<dt>featureCohortTable</dt>
+<dd><p>The Cohort table where feature cohorts are instantiated.</p></dd>
+
+
+<dt>featureCohortDefinitionSet</dt>
+<dd><p>The CohortDefinitionSet object corresponding to the cohorts to
+be used as features.</p></dd>
 
 
 <dt>exportFolder</dt>
