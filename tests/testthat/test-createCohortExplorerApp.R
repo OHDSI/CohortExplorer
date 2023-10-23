@@ -328,3 +328,115 @@ test_that("do Not Export CohortData", {
     )
   ))
 })
+
+
+test_that("use cohort features", {
+  skip_if(skipCdmTests, "CDM settings not configured")
+
+  library(dplyr)
+
+  connection <-
+    DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+
+  # create a cohort with 1000 persons
+  createCohortTableSql <- "
+    DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
+
+    CREATE TABLE @cohort_database_schema.@cohort_table (
+    	cohort_definition_id BIGINT,
+    	subject_id BIGINT,
+    	cohort_start_date DATE,
+    	cohort_end_date DATE
+    );
+
+    INSERT INTO @cohort_database_schema.@cohort_table
+    SELECT o1.person_id subject_id,
+            1 cohort_definition_id,
+            o1.observation_period_start_date cohort_start_date,
+            o1.observation_period_end_date cohort_end_date
+    FROM @cdm_database_schema.observation_period o1
+    INNER JOIN
+          (
+            SELECT person_id,
+                    ROW_NUMBER() OVER (ORDER BY NEWID()) AS new_id
+            FROM
+              (
+                SELECT DISTINCT person_id
+                FROM @cdm_database_schema.observation_period
+              ) a
+          ) b
+    ON o1.person_id = b.person_id
+    WHERE new_id <= 1000;
+
+    INSERT INTO @cohort_database_schema.@cohort_table
+    SELECT subject_id,
+            2 cohort_definition_id,
+            cohort_start_date,
+            cohort_end_date
+    FROM @cohort_database_schema.@cohort_table
+    WHERE cohort_definition_id = 1;
+
+    INSERT INTO @cohort_database_schema.@cohort_table
+    SELECT subject_id,
+            3 cohort_definition_id,
+            cohort_start_date,
+            cohort_end_date
+    FROM @cohort_database_schema.@cohort_table
+    WHERE cohort_definition_id = 1;"
+
+  featureCohortDefinitionSet <- dplyr::tibble(
+    cohortId = 2,
+    cohortName = "same cohort"
+  )
+
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = createCohortTableSql,
+    profile = FALSE,
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
+    cohort_database_schema = cohortDatabaseSchema,
+    cdm_database_schema = cdmDatabaseSchema,
+    cohort_table = cohortTable,
+    tempEmulationSchema = tempEmulationSchema
+  )
+
+  outputDir <- tempfile()
+
+  outputPath <- createCohortExplorerApp(
+    connection = connection,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cohortTable = cohortTable,
+    databaseId = "databaseData",
+    exportFolder = outputDir,
+    featureCohortDatabaseSchema = cohortDatabaseSchema,
+    featureCohortDefinitionSet = featureCohortDefinitionSet,
+    featureCohortTable = cohortTable,
+    cohortDefinitionId = 1
+  )
+
+  testthat::expect_true(file.exists(
+    file.path(
+      outputPath,
+      "data",
+      "CohortExplorer_1_databaseData.rds"
+    )
+  ))
+
+  testthat::expect_error(
+    createCohortExplorerApp(
+      connection = connection,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortDefinitionId = c(1),
+      databaseId = "databaseData",
+      exportFolder = outputDir,
+      featureCohortDatabaseSchema = cohortDatabaseSchema
+    )
+  )
+})

@@ -27,7 +27,7 @@ column(
   actionButton("nextButton", ">"),
   checkboxGroupInput(
     "cdmTables",
-    label = "CDM Table",
+    label = "Domains",
     choices = camelCaseToTitleCase(tables),
     selected = camelCaseToTitleCase(
       c(

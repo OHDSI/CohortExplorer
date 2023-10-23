@@ -7,7 +7,6 @@ shinyServer(function(input, output, session) {
       cohortId = input$selectedCohortId
     )
   })
-  
   subjectIds <- shiny::reactive({
     dataFromRds()$cohort$personId %>% sort()
   })
@@ -96,7 +95,6 @@ shinyServer(function(input, output, session) {
           }
         )
       }
-      
       selectedCdmTables <-
         gsub(
           pattern = " ",
@@ -112,6 +110,15 @@ shinyServer(function(input, output, session) {
           dplyr::filter(personId == subjectIds()[subject$index]) %>%
           dplyr::mutate(cdmTable = selectedCdmTables[[i]])
         
+        if (selectedCdmTables[[i]] == "feature_cohort_data") {
+          cohortDefinitionSet <-
+            dataFromRds()$featureCohortDefinitionSet |>
+            dplyr::select(cohortId,
+                          cohortName) |>
+            dplyr::rename(conceptId = cohortId,
+                          conceptName = cohortName)
+        }
+        
         if (!'endDate' %in% colnames(domainTableData)) {
           domainTableData <- domainTableData %>%
             dplyr::mutate(endDate = startDate)
@@ -126,11 +133,11 @@ shinyServer(function(input, output, session) {
         
         data <- dplyr::bind_rows(data,
                                  domainTableData)
-        
       }
       
       if (input$showSourceCode) {
         data <- data %>%
+          dplyr::filter(sourceConceptId >= 0) %>% 
           dplyr::mutate(conceptId = sourceConceptId) %>%
           dplyr::select(-sourceConceptId) %>%
           dplyr::group_by(personId,
@@ -144,7 +151,12 @@ shinyServer(function(input, output, session) {
           dplyr::ungroup()
       } else {
         data <- data %>%
-          dplyr::select(-sourceConceptId) %>%
+          dplyr::filter(conceptId >= 0) 
+        if ("sourceConceptId" %in% colnames(data)) {
+          data <- data %>% 
+            dplyr::select(-sourceConceptId)
+        }
+        data <- data %>%
           dplyr::group_by(personId,
                           startDate,
                           endDate,
@@ -155,9 +167,27 @@ shinyServer(function(input, output, session) {
                            .groups = "keep") %>%
           dplyr::ungroup()
       }
-      data <- data %>%
+      
+      dataFiltered <- data |> 
+        dplyr::filter(!cdmTable == "feature_cohort_data") %>%
         dplyr::inner_join(filteredConceptIds,
                           by = "conceptId")
+      
+      if (exists("cohortDefinitionSet")) {
+        featureCohortData <- data |>
+          dplyr::filter(cdmTable == "feature_cohort_data") |>
+          dplyr::inner_join(cohortDefinitionSet,
+                            by = "conceptId") |>
+          dplyr::mutate(vocabularyId = "Cohort",
+                        conceptCode = as.character(conceptId),
+                        typeConceptId = 0,
+                        records = 1)
+        
+        dataFiltered <- dplyr::bind_rows(dataFiltered,
+                                         featureCohortData)
+      }
+      
+      data <- dataFiltered
       
       if (isFALSE(input$showSourceCode)) {
         data <- data %>%
@@ -206,22 +236,22 @@ shinyServer(function(input, output, session) {
           dplyr::pull(startDate)
         
         data <- data %>%
-          dplyr::mutate(startDate = clock::add_days(x = as.Date(originDate),
-                                                    n = as.integer(
-                                                      difftime(
-                                                        time1 = startDate,
-                                                        time2 = earliestDate,
-                                                        units = "days"
-                                                      )
-                                                    ))) %>%
-          dplyr::mutate(endDate = clock::add_days(x = as.Date(originDate),
-                                                  n = as.integer(
-                                                    difftime(
-                                                      time1 = endDate,
-                                                      time2 = earliestDate,
-                                                      units = "days"
-                                                    )
-                                                  )))
+          dplyr::mutate(startDate = addDays(x = as.Date(originDate),
+                                            n = as.integer(
+                                              difftime(
+                                                time1 = startDate,
+                                                time2 = earliestDate,
+                                                units = "days"
+                                              )
+                                            ))) %>%
+          dplyr::mutate(endDate = addDays(x = as.Date(originDate),
+                                          n = as.integer(
+                                            difftime(
+                                              time1 = endDate,
+                                              time2 = earliestDate,
+                                              units = "days"
+                                            )
+                                          )))
       }
       return(data)
     }
