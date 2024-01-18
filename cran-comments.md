@@ -1,3 +1,6 @@
+## Changes version 0.1.1
+Creates a .Rproj file as part of the output.
+
 ## Changes version 0.1.0
 Removed dependency on SqlRender
 Added new functionality
