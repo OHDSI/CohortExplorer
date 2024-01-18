@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortExplorer
 #
@@ -77,4 +77,24 @@ exportCohortExplorerAppFiles <- function(exportFolder) {
     showWarnings = FALSE,
     recursive = TRUE
   )
+
+  content <- c(
+    "Version: 1.0",
+    "RestoreWorkspace: Default",
+    "SaveWorkspace: Default",
+    "AlwaysSaveHistory: Default",
+    "",
+    "EnableCodeIndexing: Yes",
+    "UseSpacesForTab: Yes",
+    "NumSpacesForTab: 2",
+    "Encoding: UTF-8",
+    "",
+    "RnwWeave: Sweave",
+    "LaTeX: pdfLaTeX"
+  )
+
+  writeLines(content, con = file.path(
+    exportFolder,
+    "CohortExplorer.Rproj"
+  ))
 }

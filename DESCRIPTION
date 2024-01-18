@@ -1,8 +1,8 @@
 Package: CohortExplorer
 Type: Package
 Title: Explorer of Profiles of Patients in a Cohort
-Version: 0.1.0
-Date: 2023-10-22
+Version: 0.1.1
+Date: 2024-01-18
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
@@ -30,7 +30,7 @@ Suggests:
   knitr,
   withr
 License: Apache License
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.0
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8

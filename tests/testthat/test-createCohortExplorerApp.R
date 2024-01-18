@@ -1,8 +1,8 @@
 test_that("Create app with cohort data in temp table", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   createCohortTableSql <- "
     DROP TABLE IF EXISTS #temp_cohort_table;
 
@@ -25,11 +25,11 @@ test_that("Create app with cohort data in temp table", {
     ON o1.person_id = b.person_id
     WHERE new_id < 10
   ;"
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = createCohortTableSql,
@@ -38,9 +38,9 @@ test_that("Create app with cohort data in temp table", {
     reportOverallTime = FALSE,
     cdm_database_schema = cdmDatabaseSchema
   )
-  
+
   outputDir <- tempfile()
-  
+
   outputLocation <- createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = NULL,
@@ -52,7 +52,7 @@ test_that("Create app with cohort data in temp table", {
     databaseId = "databaseData",
     exportFolder = outputDir
   )
-  
+
   testthat::expect_error(
     createCohortExplorerApp(
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -64,16 +64,16 @@ test_that("Create app with cohort data in temp table", {
       exportFolder = outputDir
     )
   )
-  
+
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
 })
 
 
 test_that("Error because database has space", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   outputDir <- tempfile()
-  
+
   testthat::expect_error(
     createCohortExplorerApp(
       connectionDetails = connectionDetails,
@@ -87,7 +87,7 @@ test_that("Error because database has space", {
       exportFolder = outputDir
     )
   )
-  
+
   unlink(
     x = outputDir,
     recursive = TRUE,
@@ -97,9 +97,9 @@ test_that("Error because database has space", {
 
 test_that("no connection or connection details", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   outputDir <- tempfile()
-  
+
   testthat::expect_error(
     createCohortExplorerApp(
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -112,7 +112,7 @@ test_that("no connection or connection details", {
       exportFolder = outputDir
     )
   )
-  
+
   unlink(
     x = outputDir,
     recursive = TRUE,
@@ -122,9 +122,9 @@ test_that("no connection or connection details", {
 
 test_that("Cohort has no data", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
 
@@ -134,7 +134,7 @@ test_that("Cohort has no data", {
   	cohort_start_date DATE,
   	cohort_end_date DATE
   );"
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = DatabaseConnector::connect(connectionDetails),
     sql = createCohortTableSql,
@@ -144,9 +144,9 @@ test_that("Cohort has no data", {
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable
   )
-  
+
   outputDir <- tempfile()
-  
+
   # cohort table has no subjects
   testthat::expect_warning(
     createCohortExplorerApp(
@@ -161,7 +161,7 @@ test_that("Cohort has no data", {
       exportFolder = outputDir
     )
   )
-  
+
   unlink(
     x = outputDir,
     recursive = TRUE,
@@ -172,13 +172,13 @@ test_that("Cohort has no data", {
 
 test_that("create rand 100 in cohort", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   # create a cohort with 1000 persons
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
@@ -202,7 +202,7 @@ test_that("create rand 100 in cohort", {
     ON o1.person_id = b.person_id
     WHERE new_id <= 1000
   ;"
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = createCohortTableSql,
@@ -213,9 +213,9 @@ test_that("create rand 100 in cohort", {
     cdm_database_schema = cdmDatabaseSchema,
     cohort_table = cohortTable
   )
-  
+
   outputDir <- tempfile()
-  
+
   createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -227,7 +227,7 @@ test_that("create rand 100 in cohort", {
     databaseId = "databaseData",
     exportFolder = outputDir
   )
-  
+
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
 })
@@ -236,13 +236,13 @@ test_that("create rand 100 in cohort", {
 
 test_that("create rand 100 in cohort with date shifting", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   # create a cohort with 1000 persons
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
@@ -266,7 +266,7 @@ test_that("create rand 100 in cohort with date shifting", {
     ON o1.person_id = b.person_id
     WHERE new_id <= 1000
   ;"
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = createCohortTableSql,
@@ -277,9 +277,9 @@ test_that("create rand 100 in cohort with date shifting", {
     cdm_database_schema = cdmDatabaseSchema,
     cohort_table = cohortTable
   )
-  
+
   outputDir <- tempfile()
-  
+
   createCohortExplorerApp(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -294,7 +294,7 @@ test_that("create rand 100 in cohort with date shifting", {
     assignNewId = TRUE,
     shiftDates = TRUE
   )
-  
+
   testthat::expect_true(file.exists(file.path(outputDir)))
   testthat::expect_true(file.exists(file.path(outputDir, "data")))
 })
@@ -302,16 +302,16 @@ test_that("create rand 100 in cohort with date shifting", {
 
 test_that("do Not Export CohortData", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;"
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = createCohortTableSql,
@@ -332,7 +332,7 @@ test_that("do Not Export CohortData", {
     databaseId = "databaseData",
     exportFolder = outputDir
   )
-  
+
   testthat::expect_true(file.exists(
     file.path(
       outputDir,
@@ -345,13 +345,13 @@ test_that("do Not Export CohortData", {
 
 test_that("use cohort features", {
   skip_if(skipCdmTests, "CDM settings not configured")
-  
+
   library(dplyr)
-  
+
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   # create a cohort with 1000 persons
   createCohortTableSql <- "
     DROP TABLE IF EXISTS @cohort_database_schema.@cohort_table;
@@ -397,12 +397,12 @@ test_that("use cohort features", {
             cohort_end_date
     FROM @cohort_database_schema.@cohort_table
     WHERE cohort_definition_id = 1;"
-  
+
   featureCohortDefinitionSet <- dplyr::tibble(
     cohortId = 2,
     cohortName = "same cohort"
   )
-  
+
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = createCohortTableSql,
@@ -414,9 +414,9 @@ test_that("use cohort features", {
     cohort_table = cohortTable,
     tempEmulationSchema = tempEmulationSchema
   )
-  
+
   outputDir <- tempfile()
-  
+
   outputPath <- createCohortExplorerApp(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -430,7 +430,7 @@ test_that("use cohort features", {
     featureCohortTable = cohortTable,
     cohortDefinitionId = 1
   )
-  
+
   testthat::expect_true(file.exists(
     file.path(
       outputPath,
@@ -438,7 +438,7 @@ test_that("use cohort features", {
       "CohortExplorer_1_databaseData.rds"
     )
   ))
-  
+
   testthat::expect_error(
     createCohortExplorerApp(
       connection = connection,

@@ -1,3 +1,9 @@
+CohortExplorer 0.1.1
+======================
+Improve test coverage to 100%
+Force creation of .Rproj file for shiny app.
+
+
 CohortExplorer 0.1.0
 ======================
 New functionality that adds a 'Feature Cohort' domain based on instantiated cohorts
