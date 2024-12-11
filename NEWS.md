@@ -2,6 +2,7 @@ CohortExplorer 0.1.1
 ======================
 Improve test coverage to 100%
 Force creation of .Rproj file for shiny app.
+Support BIGINT person IDs.
 
 
 CohortExplorer 0.1.0

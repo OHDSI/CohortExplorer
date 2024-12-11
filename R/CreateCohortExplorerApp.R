@@ -172,23 +172,14 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
     add = errorMessage
   )
 
-  if (is.null(personIds)) {
-    checkmate::assertIntegerish(
-      x = sampleSize,
-      lower = 0,
-      len = 1,
-      null.ok = TRUE,
+  # personIds can be interger, numeric, or character to allow bigint (R does not
+  # support 64-bit integers):
+  if (!is.null(personIds)) {
+    checkmate::assertTRUE(
+      all(grepl("[0-9]+", as.character(personIds))), 
       add = errorMessage
     )
-  } else {
-    checkmate::assertIntegerish(
-      x = personIds,
-      lower = 0,
-      min.len = 1,
-      null.ok = TRUE
-    )
   }
-
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
 
   dir.create(
@@ -331,7 +322,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
       progressBar = TRUE,
       bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
       camelCaseToSnakeCase = TRUE,
-      data = dplyr::tibble(subjectId = as.double(personIds) |> unique())
+      data = dplyr::tibble(subjectId = as.character(personIds) |> unique())
     )
 
     DatabaseConnector::renderTranslateExecuteSql(
@@ -341,7 +332,7 @@ createCohortExplorerApp <- function(connectionDetails = NULL,
                   INTO #person_id_data2
                   FROM #person_id_data a
                   INNER JOIN #persons_to_filter b
-                  ON a.subject_id = b.subject_id;
+                  ON CAST(a.subject_id AS BIGINT) = CAST(b.subject_id AS BIGINT);
 
                   DROP TABLE IF EXISTS #person_id_data;
                   SELECT DISTINCT subject_id
